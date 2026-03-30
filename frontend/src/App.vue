@@ -78,28 +78,43 @@
 
     <!-- Services Section -->
     <section class="services" id="services">
-      <h2 class="section-title">我們的服務</h2>
-      <p class="section-subtitle">為您的愛車提供全方位的專業服務</p>
-      <div class="services-grid">
-        <div class="service-card">
-          <div class="service-icon">🚗</div>
-          <h3>車輛保養</h3>
-          <p>專業的特斯拉車輛保養服務，讓您的愛車始終保持最佳狀態</p>
-        </div>
-        <div class="service-card">
-          <div class="service-icon">🎨</div>
-          <h3>包膜改色</h3>
-          <p>高品質車身貼膜服務，保護車漆的同時彰顯個性</p>
-        </div>
-        <div class="service-card">
-          <div class="service-icon">🛡️</div>
-          <h3>犀牛皮保護</h3>
-          <p>頂級漆面保護膜，有效防止刮蹭和石子飛濺</p>
-        </div>
-        <div class="service-card">
-          <div class="service-icon">🌞</div>
-          <h3>隔熱紙</h3>
-          <p>專業隔熱膜安裝，有效阻隔紫外線和熱量</p>
+      <div class="services-header">
+        <h2 class="section-title">SPACE T LAB 超強特斯拉專門店</h2>
+        <a href="#contact" class="services-btn">一站式服務中心</a>
+      </div>
+      <div class="car-services-container">
+        <div class="car-image-wrapper">
+          <img src="/images/tesla-service-car.webp" alt="特斯拉服務" class="car-services-image" />
+          
+          <!-- 车顶服务按钮 -->
+          <button class="service-point point-roof">
+            車體防護/隔熱紙
+            <span class="point-label">通勤匯嘉竭誠為您服務</span>
+          </button>
+          
+          <!-- 车头服务按钮 -->
+          <button class="service-point point-front">
+            車頭改裝
+            <span class="point-label">通勤匯嘉竭誠為您服務</span>
+          </button>
+          
+          <!-- 车侧服务按钮 -->
+          <button class="service-point point-side">
+            車身包膜
+            <span class="point-label">通勤匯嘉竭誠為您服務</span>
+          </button>
+          
+          <!-- 车位服务按钮 -->
+          <button class="service-point point-rear">
+            露營車宿
+            <span class="point-label">通勤匯嘉竭誠為您服務</span>
+          </button>
+          
+          <!-- 车轮服务按钮 -->
+          <button class="service-point point-wheel">
+            輪胎服務
+            <span class="point-label">通勤匯嘉竭誠為您服務</span>
+          </button>
         </div>
       </div>
     </section>
@@ -377,20 +392,18 @@ onUnmounted(() => {
   bottom: 0;
   background: rgba(0,0,0,0.3);
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 100px 80px 100px 100px;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 0 80px 70px 100px;
 }
 
 .hero-content {
   text-align: left;
   color: #fff;
   z-index: 2;
-  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  margin-top: 80px;
 }
 
 .hero-content h1 {
