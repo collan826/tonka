@@ -109,6 +109,7 @@ nav a:hover {
   object-fit: cover;
 }
 
+/* Hero overlay and content styles are now in App.vue scoped style */
 .hero-overlay {
   position: absolute;
   top: 0;
@@ -117,12 +118,13 @@ nav a:hover {
   bottom: 0;
   background: rgba(0,0,0,0.3);
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 80px 60px;
 }
 
 .hero-content {
-  text-align: center;
+  text-align: left;
   color: #fff;
   z-index: 2;
 }
