@@ -1,5 +1,9 @@
 #!/bin/bash
 # Tonka 项目部署脚本
+# 使用方法：./deploy-tonka.sh [服务器IP]
+# 示例：./deploy-tonka.sh 互联网IP
+
+SERVER_IP=${1:-your-server-ip}
 
 echo "🚀 开始部署 Tonka..."
 
@@ -49,7 +53,7 @@ if [ -d "/root/tonka/backend" ]; then
 fi
 
 echo "✅ Tonka 部署完成！"
-echo "🌐 前端访问地址：http://43.167.237.68/"
+echo "🌐 前端访问地址：http://${SERVER_IP}:5173/"
 if [ -d "/root/tonka/backend" ]; then
-    echo "🔌 后端API地址：http://43.167.237.68:3000/"
+    echo "🔌 后端API地址：http://${SERVER_IP}:3000/"
 fi

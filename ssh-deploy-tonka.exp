@@ -1,11 +1,39 @@
 #!/usr/bin/expect -f
 
+# Tonka 项目自动化部署脚本
+# 使用方法：./ssh-deploy-tonka.exp <服务器地址> <密码> [部署脚本路径]
+# 示例：./ssh-deploy-tonka.exp root@互联网IP your-password ./deploy-tonka.sh
+
 set timeout 300
-set password "JXq]c3h7AQ%|"
-set server "root@43.167.237.68"
-set script "/home/tonka/.openclaw/workspace/deploy-tonka.sh"
+
+# 检查参数
+if {$argc < 2} {
+    puts "使用方法：$argv0 <服务器地址> <密码> \[部署脚本路径\]"
+    puts "示例：$argv0 root@互联网IP your-password ./deploy-tonka.sh"
+    exit 1
+}
+
+# 读取参数
+set server [lindex $argv 0]
+set password [lindex $argv 1]
+set script [lindex $argv 2]
+
+# 如果没有提供部署脚本路径，使用默认值
+if {$script eq ""} {
+    set script "./deploy-tonka.sh"
+}
+
+# 检查部署脚本是否存在
+if {![file exists $script]} {
+    puts "错误：部署脚本不存在：$script"
+    exit 1
+}
+
+puts "🚀 开始部署 Tonka..."
+puts "📡 服务器：$server"
 
 # 上传部署脚本
+puts "📤 上传部署脚本..."
 spawn scp -o StrictHostKeyChecking=no $script $server:/root/
 expect {
     "password:" { send "$password\r" }
@@ -14,6 +42,7 @@ expect {
 }
 
 # 远程执行部署脚本
+puts "🔧 远程执行部署..."
 spawn ssh -o StrictHostKeyChecking=no $server "chmod +x /root/deploy-tonka.sh && /root/deploy-tonka.sh"
 expect {
     "password:" { send "$password\r" }
