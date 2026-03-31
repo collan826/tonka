@@ -8,9 +8,10 @@
           <span>📧 邮箱：info@tonka.com</span>
         </div>
         <div class="top-bar-right">
-          <a href="#">Facebook</a>
-          <a href="#">Instagram</a>
-          <a href="#">Line</a>
+          <div class="user-info">
+            <span v-if="isLoggedIn" class="welcome-text">👋 欢迎，{{ userName }}</span>
+            <a v-else href="#login" class="login-link">登录 / 注册</a>
+          </div>
         </div>
       </div>
     </div>
@@ -119,6 +120,44 @@
       </div>
     </section>
 
+    <!-- Tesla Services Section -->
+    <section class="tesla-section">
+      <div class="tesla-header">
+        <h2 class="section-title-zh">{{ teslaServicesTitle.zh }}</h2>
+        <h3 class="section-title-en">{{ teslaServicesTitle.en }}</h3>
+      </div>
+      <div class="tesla-grid">
+        <div v-for="(item, index) in teslaServices" :key="index" class="tesla-card">
+          <div class="tesla-image">
+            <img :src="item.image" :alt="item.title" />
+          </div>
+          <div class="tesla-overlay">
+            <h3>{{ item.title }}</h3>
+            <a :href="item.link" class="tesla-btn">{{ item.buttonText }}</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tesla Accessories Section -->
+    <section class="tesla-section">
+      <div class="tesla-header">
+        <h2 class="section-title-zh">{{ teslaAccessoriesTitle.zh }}</h2>
+        <h3 class="section-title-en">{{ teslaAccessoriesTitle.en }}</h3>
+      </div>
+      <div class="tesla-grid">
+        <div v-for="(item, index) in teslaAccessories" :key="index" class="tesla-card">
+          <div class="tesla-image">
+            <img :src="item.image" :alt="item.title" />
+          </div>
+          <div class="tesla-overlay">
+            <h3>{{ item.title }}</h3>
+            <a :href="item.link" class="tesla-btn">{{ item.buttonText }}</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Products Section -->
     <section class="products" id="products">
       <h2 class="section-title">熱門產品</h2>
@@ -222,6 +261,9 @@
       </div>
       <div class="footer-bottom">
         <p>&copy; 2026 Tonka. All rights reserved.</p>
+        <p style="margin-top: 10px;">
+          <a :href="adminUrl" target="_blank" style="color: #666; text-decoration: none;">🔧 后台管理</a>
+        </p>
       </div>
     </footer>
   </div>
@@ -231,6 +273,79 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 
 const currentSlide = ref(0)
+const adminUrl = ref('')
+
+// 用户登录状态
+const isLoggedIn = ref(false)
+const userName = ref('')
+
+// 特斯拉专业服务
+const teslaServicesTitle = ref({
+  zh: '特斯拉 專業服務',
+  en: 'Tesla Services'
+})
+
+const teslaServices = ref([
+  {
+    image: '/images/煥新-Model-Y.png',
+    title: 'Model Y 煥新',
+    buttonText: '查看詳情',
+    link: '#contact'
+  },
+  {
+    image: '/images/特斯拉必備配件.webp',
+    title: '車體包膜',
+    buttonText: '立即預約',
+    link: '#contact'
+  },
+  {
+    image: '/images/特斯拉鍍膜防曬.webp',
+    title: '鍍膜防曬',
+    buttonText: '立即預約',
+    link: '#contact'
+  },
+  {
+    image: '/images/0701_新Y交車禮包2.jpg',
+    title: '輪胎服務',
+    buttonText: '立即預約',
+    link: '#contact'
+  }
+])
+
+// 特斯拉专用配件标题
+const teslaAccessoriesTitle = ref({
+  zh: '特斯拉 專用配件',
+  en: 'Tesla Accessories'
+})
+
+// 特斯拉专用配件
+const teslaAccessories = ref([
+  {
+    image: '/images/官網Banner_MOBEIL0316.jpg',
+    title: 'Model Y 專用腳墊',
+    buttonText: '加入購物車',
+    link: '#products'
+  },
+  {
+    image: '/images/煥新-Model-Y.png',
+    title: 'Model 3 煥新套件',
+    buttonText: '加入購物車',
+    link: '#products'
+  },
+  {
+    image: '/images/特斯拉必備配件.webp',
+    title: '特斯拉必備配件',
+    buttonText: '加入購物車',
+    link: '#products'
+  },
+  {
+    image: '/images/特斯拉鍍膜防曬.webp',
+    title: '特斯拉收納盒',
+    buttonText: '加入購物車',
+    link: '#products'
+  }
+])
+
 const slides = ref([
   {
     image: '/images/官網Banner_MOBEIL0316.jpg',
@@ -280,6 +395,7 @@ onMounted(() => {
   autoSlideInterval = setInterval(() => {
     nextSlide()
   }, 5000)
+  adminUrl.value = 'http://' + window.location.hostname + ':1025'
 })
 
 onUnmounted(() => {
@@ -416,5 +532,142 @@ onUnmounted(() => {
   font-size: 20px;
   margin-bottom: 32px;
   text-shadow: 1px 1px 4px rgba(0,0,0,0.5);
+}
+
+/* Tesla Section */
+.tesla-section {
+  padding: 80px 0;
+  background: #f8f9fa;
+}
+
+.tesla-section:nth-of-type(even) {
+  background: #fff;
+}
+
+.tesla-header {
+  max-width: 1200px;
+  margin: 0 auto 40px;
+  padding: 0 20px;
+  text-align: left;
+}
+
+.section-title-zh {
+  font-size: 32px;
+  color: #333;
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.section-title-en {
+  font-size: 16px;
+  color: #666;
+  margin: 0;
+  font-weight: 400;
+  letter-spacing: 2px;
+}
+
+.tesla-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.tesla-card {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.tesla-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.tesla-image {
+  width: 100%;
+  height: 250px;
+  overflow: hidden;
+}
+
+.tesla-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s;
+}
+
+.tesla-card:hover .tesla-image img {
+  transform: scale(1.1);
+}
+
+.tesla-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent;
+  padding: 20px;
+}
+
+.tesla-overlay h3 {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-size: 22px;
+  color: #fff;
+  margin: 0;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+  font-weight: 600;
+}
+
+.tesla-btn {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: inline-block;
+  padding: 12px 35px;
+  background: #1e8bc3;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 25px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+
+.tesla-btn:hover {
+  background: #155f80;
+}
+
+/* User Info */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.welcome-text {
+  color: #fff;
+  font-size: 14px;
+}
+
+.login-link {
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  padding: 8px 20px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 20px;
+  transition: background 0.3s;
+}
+
+.login-link:hover {
+  background: rgba(255,255,255,0.3);
 }
 </style>

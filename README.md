@@ -1,147 +1,117 @@
-# Tonka 汽車周邊
+# Tonka 项目
 
-專業汽車配件 · 一站式服務中心
+## 项目简介
 
-## 項目簡介
+Tonka 汽车周边商城管理系统，包含商城展示前端、后台管理前端和后端 API。
 
-Tonka 是一個基於 Vue 3 + Vite 構建的汽車周邊電商網站，參考了 https://spacet-lab.com/ 的設計風格。
+---
 
-## 技術棧
+## 技术栈
 
-- **前端**: Vue 3 + Vite
-- **後端**: Node.js + Express + SQLite (可選)
-- **樣式**: 原生 CSS
-- **部署**: Nginx
+### 后端
+- **语言**: Node.js
+- **框架**: Express
+- **数据库**: SQLite
+- **认证**: JWT (jsonwebtoken)
+- **密码加密**: bcryptjs
+- **文件上传**: multer
 
-## 項目結構
+### 管理后台前端
+- **框架**: Vue 3
+- **构建工具**: Vite
+- **UI 组件**: Element Plus
+- **状态管理**: Pinia
+- **路由**: Vue Router 4
+- **HTTP 客户端**: Axios
+
+### 商城展示前端
+- **框架**: Vue 3
+- **构建工具**: Vite
+- **CSS 框架**: Tailwind CSS
+
+---
+
+## 项目结构
 
 ```
 tonka/
-├── frontend/          # 前端代碼
-│   ├── public/        # 靜態資源
-│   │   └── images/    # 圖片資源
-│   ├── src/
-│   │   ├── App.vue    # 主頁面組件
-│   │   ├── main.js    # 入口文件
-│   │   └── style.css  # 樣式文件
-│   └── package.json
-├── backend/           # 後端代碼 (可選)
-│   ├── index.js       # 後端服務器
-│   ├── seed.js        # 數據庫初始化
-│   └── package.json
-└── README.md          # 項目說明
+├── backend/                    # 后端（Node.js + Express + SQLite）
+├── admin/                      # 管理后台前端（Vue 3）
+├── frontend/                   # 商城展示前端（Vue 3）
+├── upload/                     # 文件上传目录
+├── sql/                        # 数据库脚本
+├── memory/                     # 开发日志
+└── README.md                   # 项目说明
 ```
 
-## 功能特性
+---
 
-- ✅ 響應式首頁設計
-- ✅ 輪播圖（淡入淡出效果）
-- ✅ 服務展示區域
-- ✅ 產品展示區域
-- ✅ 關於我們區域
-- ✅ 頁尾信息
+## 快速开始
 
-## 本地開發
-
-### 前端開發
+### 后端启动
 
 ```bash
-cd tonka/frontend
+cd backend
+npm install
+npm start
+```
+
+后端运行在 http://localhost:8080
+
+### 管理后台前端启动
+
+```bash
+cd admin
 npm install
 npm run dev
 ```
 
-訪問地址：http://localhost:5173/
+管理后台运行在 http://localhost:1025
 
-### 後端開發 (可選)
+### 商城展示前端启动
 
 ```bash
-cd tonka/backend
+cd frontend
 npm install
-node seed.js          # 初始化數據庫
-npm start             # 啟動後端服務
+npm run dev
 ```
 
-後端訪問地址：http://localhost:3000/
+---
 
-## 部署指南
+## 默认账号
 
-### 1. 構建前端
+- **用户名**: admin
+- **密码**: admin123
 
-```bash
-cd tonka/frontend
-npm run build
-```
+---
 
-構建產物將生成在 `dist/` 目錄。
+## 功能说明
 
-### 2. 準備部署腳本
+### 系统管理
+- **系统设置**: 配置公司名称、联系电话、邮箱、地址、营业时间等
+- **用户管理**: 管理网站注册用户（用户名、姓名、电话、邮箱、状态等）
 
-確保已創建 `deploy-tonka.sh` 部署腳本（位於項目根目錄）。
+### 页面管理
+- **轮播管理**: 管理首页轮播图
+- **汽车服务**: 管理汽车服务相关内容
+- **专业服务**: 管理专业服务展示
+- **专业配件**: 管理专业配件展示
+- **热门产品**: 管理热门产品展示
 
-### 3. 部署到服務器
+### 产品管理
+- 待开发
 
-使用 SSH 連接到服務器並執行部署：
+### 订单管理
+- 待开发
 
-```bash
-# 上傳部署腳本
-scp deploy-tonka.sh root@your-server:/root/
+---
 
-# 遠程執行部署
-ssh root@your-server "chmod +x /root/deploy-tonka.sh && /root/deploy-tonka.sh"
-```
+## 开发日志
 
-或者使用 `sshpass` 自動化部署（需要安裝 sshpass）：
+- [2026-03-31](./memory/2026-03-31.md)
 
-```bash
-sshpass -p 'your-password' scp deploy-tonka.sh root@your-server:/root/
-sshpass -p 'your-password' ssh root@your-server "chmod +x /root/deploy-tonka.sh && /root/deploy-tonka.sh"
-```
+---
 
-### 4. 服務器配置
-
-確保服務器已安裝：
-- Node.js 20+ (推薦使用 nvm)
-- Nginx
-- Git
-
-Nginx 配置參考：
-```nginx
-server {
-    listen 5173;
-    listen [::]:5173;
-    server_name _;
-    root /usr/share/nginx/html;
-
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-}
-```
-
-## 訪問地址
-
-- **本地開發**: http://localhost:5173/
-- **局域網訪問**: http://局域网IP:5173/
-- **測試服務器**: http://互联网IP:5173/
-
-## 更新部署
-
-當代碼更新後：
-
-1. **提交代碼到 GitHub**
-2. **推送指令後，自動同步到測試服務器**
-
-## 注意事項
-
-- 未經用戶指令，請勿隨意推送代碼到 GitHub 或更新測試服務器
-- 每次更新前請先確認用戶需求
-- 生產環境部署前請充分測試
-
-## 開發者
-
-Tonka 項目團隊
-
-## 許可證
+## 许可证
 
 MIT License
