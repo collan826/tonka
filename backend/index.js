@@ -316,6 +316,60 @@ app.post('/api/admin/config', express.json(), (req, res) => {
   })
 })
 
+// ==================== 轮播图管理 API ====================
+
+// 获取轮播图列表（管理后台用）
+app.get('/api/admin/banners', (req, res) => {
+  db.all('SELECT * FROM banner ORDER BY sort_order', [], (err, rows) => {
+    if (err) {
+      return res.json({ code: 500, message: '获取失败' })
+    }
+    res.json({ code: 200, data: rows })
+  })
+})
+
+// 添加轮播图
+app.post('/api/admin/banners', express.json(), (req, res) => {
+  const { image_url, title, subtitle, button_text, link, sort_order, is_active } = req.body
+  db.run(
+    'INSERT INTO banner (image_url, title, subtitle, button_text, link, sort_order, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    [image_url, title || '', subtitle || '', button_text || '', link || '#', sort_order || 0, is_active !== undefined ? is_active : 1],
+    function(err) {
+      if (err) {
+        return res.json({ code: 500, message: '添加失败' })
+      }
+      res.json({ code: 200, message: '添加成功', data: { id: this.lastID } })
+    }
+  )
+})
+
+// 更新轮播图
+app.put('/api/admin/banners/:id', express.json(), (req, res) => {
+  const { id } = req.params
+  const { image_url, title, subtitle, button_text, link, sort_order, is_active } = req.body
+  db.run(
+    'UPDATE banner SET image_url = ?, title = ?, subtitle = ?, button_text = ?, link = ?, sort_order = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+    [image_url, title, subtitle, button_text, link, sort_order, is_active, id],
+    function(err) {
+      if (err) {
+        return res.json({ code: 500, message: '更新失败' })
+      }
+      res.json({ code: 200, message: '更新成功' })
+    }
+  )
+})
+
+// 删除轮播图
+app.delete('/api/admin/banners/:id', (req, res) => {
+  const { id } = req.params
+  db.run('DELETE FROM banner WHERE id = ?', [id], function(err) {
+    if (err) {
+      return res.json({ code: 500, message: '删除失败' })
+    }
+    res.json({ code: 200, message: '删除成功' })
+  })
+})
+
 // ==================== 公开 API ====================
 
 // 获取系统配置（公开用）

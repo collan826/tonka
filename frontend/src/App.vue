@@ -430,6 +430,26 @@ const slides = ref([
   }
 ])
 
+// 获取轮播图数据
+const fetchBanners = async () => {
+  try {
+    const apiBase = 'http://' + window.location.hostname + ':8080'
+    const response = await fetch(apiBase + '/api/public/banners')
+    const result = await response.json()
+    if (result.code === 200 && result.data && result.data.length > 0) {
+      slides.value = result.data.map(item => ({
+        image: item.image_url.startsWith('http') ? item.image_url : (apiBase + item.image_url),
+        title: item.title || '',
+        subtitle: item.subtitle || '',
+        buttonText: item.button_text || '查看详情',
+        link: item.link || '#'
+      }))
+    }
+  } catch (error) {
+    console.error('获取轮播图失败:', error)
+  }
+}
+
 let autoSlideInterval = null
 
 const nextSlide = () => {
@@ -450,6 +470,7 @@ onMounted(() => {
   }, 5000)
   adminUrl.value = 'http://' + window.location.hostname + ':1025'
   fetchConfig()
+  fetchBanners()
 })
 
 onUnmounted(() => {
