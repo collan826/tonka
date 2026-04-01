@@ -1,8 +1,14 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
+const getApiBase = () => {
+  const hostname = window.location.hostname
+  const apiPort = hostname === '192.168.0.120' ? '8080' : '3000'
+  return 'http://' + hostname + ':' + apiPort
+}
+
 const request = axios.create({
-  baseURL: 'http://192.168.0.120:8080',
+  baseURL: getApiBase(),
   timeout: 10000
 })
 

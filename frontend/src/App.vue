@@ -433,7 +433,9 @@ const slides = ref([
 // 获取轮播图数据
 const fetchBanners = async () => {
   try {
-    const apiBase = 'http://' + window.location.hostname + ':8080'
+    const hostname = window.location.hostname
+    const apiPort = hostname === '192.168.0.120' ? '8080' : '3000'
+    const apiBase = 'http://' + hostname + ':' + apiPort
     const response = await fetch(apiBase + '/api/public/banners')
     const result = await response.json()
     if (result.code === 200 && result.data && result.data.length > 0) {
