@@ -4,8 +4,8 @@
     <div class="top-bar">
       <div class="top-bar-content">
         <div class="top-bar-left">
-          <span>📞 联系电话：400-888-8888</span>
-          <span>📧 邮箱：info@tonka.com</span>
+          <span>📞 联系电话：{{ sysConfig.contact_phone }}</span>
+          <span>📧 邮箱：{{ sysConfig.contact_email }}</span>
         </div>
         <div class="top-bar-right">
           <div class="user-info">
@@ -163,44 +163,14 @@
       <h2 class="section-title">熱門產品</h2>
       <p class="section-subtitle">精選優質汽車周邊配件</p>
       <div class="products-grid">
-        <div class="product-card">
+        <div v-for="(product, index) in hotProducts" :key="index" class="product-card">
           <div class="product-image">
-            <img src="/images/煥新-Model-Y.png" alt="Model Y 配件" />
+            <img :src="product.image" :alt="product.title" />
           </div>
           <div class="product-info">
-            <h3>Model Y 煥新套件</h3>
-            <div class="product-price">¥2,999</div>
-            <button class="add-to-cart">加入購物車</button>
-          </div>
-        </div>
-        <div class="product-card">
-          <div class="product-image">
-            <img src="/images/特斯拉必備配件.webp" alt="特斯拉必備配件" />
-          </div>
-          <div class="product-info">
-            <h3>特斯拉必備配件套裝</h3>
-            <div class="product-price">¥1,299</div>
-            <button class="add-to-cart">加入購物車</button>
-          </div>
-        </div>
-        <div class="product-card">
-          <div class="product-image">
-            <img src="/images/特斯拉鍍膜防曬.webp" alt="鍍膜防曬" />
-          </div>
-          <div class="product-info">
-            <h3>高級鍍膜防曬服務</h3>
-            <div class="product-price">¥3,599</div>
-            <button class="add-to-cart">立即預約</button>
-          </div>
-        </div>
-        <div class="product-card">
-          <div class="product-image">
-            <img src="/images/0701_新Y交車禮包2.jpg" alt="交車禮包" />
-          </div>
-          <div class="product-info">
-            <h3>Model Y 交車禮包</h3>
-            <div class="product-price">¥899</div>
-            <button class="add-to-cart">加入購物車</button>
+            <h3>{{ product.title }}</h3>
+            <div class="product-price">{{ product.price }}</div>
+            <a :href="product.link" class="product-btn">{{ product.buttonText }}</a>
           </div>
         </div>
       </div>
@@ -225,7 +195,7 @@
     <footer>
       <div class="footer-content">
         <div class="footer-section">
-          <h4>Tonka 汽車周邊</h4>
+          <h4>{{ sysConfig.company_name }}</h4>
           <p>專業汽車配件 · 一站式服務中心</p>
           <p>我們致力於為您的愛車提供最優質的產品與服務。</p>
         </div>
@@ -252,10 +222,10 @@
         <div class="footer-section">
           <h4>聯繫我們</h4>
           <ul class="footer-contact">
-            <li>📍 四川省成都市</li>
-            <li>📞 400-888-8888</li>
-            <li>📧 info@tonka.com</li>
-            <li>⏰ 週一至週日 9:00-21:00</li>
+            <li>📍 {{ sysConfig.address }}</li>
+            <li>📞 {{ sysConfig.contact_phone }}</li>
+            <li>📧 {{ sysConfig.contact_email }}</li>
+            <li>⏰ {{ sysConfig.business_hours }}</li>
           </ul>
         </div>
       </div>
@@ -278,6 +248,29 @@ const adminUrl = ref('')
 // 用户登录状态
 const isLoggedIn = ref(false)
 const userName = ref('')
+
+// 系统配置
+const sysConfig = ref({
+  company_name: 'Tonka 汽車周邊',
+  contact_phone: '400-888-8888',
+  contact_email: 'info@tonka.com',
+  address: '四川省成都市',
+  business_hours: '週一至週日 9:00-21:00'
+})
+
+// 获取系统配置
+const fetchConfig = async () => {
+  try {
+    const apiBase = 'http://' + window.location.hostname + ':8080'
+    const response = await fetch(apiBase + '/api/public/config')
+    const result = await response.json()
+    if (result.code === 200 && result.data) {
+      sysConfig.value = { ...sysConfig.value, ...result.data }
+    }
+  } catch (error) {
+    console.error('获取系统配置失败:', error)
+  }
+}
 
 // 特斯拉专业服务
 const teslaServicesTitle = ref({
@@ -346,6 +339,66 @@ const teslaAccessories = ref([
   }
 ])
 
+// 热门产品
+const hotProducts = ref([
+  {
+    image: '/images/煥新-Model-Y.png',
+    title: 'Model Y 煥新套件',
+    price: '¥2,999',
+    buttonText: '加入購物車',
+    link: '#contact'
+  },
+  {
+    image: '/images/特斯拉必備配件.webp',
+    title: '特斯拉必備配件套裝',
+    price: '¥1,299',
+    buttonText: '加入購物車',
+    link: '#contact'
+  },
+  {
+    image: '/images/特斯拉鍍膜防曬.webp',
+    title: '高級鍍膜防曬服務',
+    price: '¥3,599',
+    buttonText: '立即預約',
+    link: '#contact'
+  },
+  {
+    image: '/images/0701_新Y交車禮包2.jpg',
+    title: 'Model Y 交車禮包',
+    price: '¥899',
+    buttonText: '加入購物車',
+    link: '#contact'
+  },
+  {
+    image: '/images/官網Banner_MOBEIL0316.jpg',
+    title: 'Model Y 專用腳墊',
+    price: '¥599',
+    buttonText: '加入購物車',
+    link: '#contact'
+  },
+  {
+    image: '/images/煥新-Model-Y.png',
+    title: 'Model 3 煥新套件',
+    price: '¥2,799',
+    buttonText: '加入購物車',
+    link: '#contact'
+  },
+  {
+    image: '/images/特斯拉必備配件.webp',
+    title: '特斯拉收納盒套裝',
+    price: '¥399',
+    buttonText: '加入購物車',
+    link: '#contact'
+  },
+  {
+    image: '/images/特斯拉鍍膜防曬.webp',
+    title: '輪胎升級服務',
+    price: '¥1,999',
+    buttonText: '立即預約',
+    link: '#contact'
+  }
+])
+
 const slides = ref([
   {
     image: '/images/官網Banner_MOBEIL0316.jpg',
@@ -396,6 +449,7 @@ onMounted(() => {
     nextSlide()
   }, 5000)
   adminUrl.value = 'http://' + window.location.hostname + ':1025'
+  fetchConfig()
 })
 
 onUnmounted(() => {
@@ -669,5 +723,87 @@ onUnmounted(() => {
 
 .login-link:hover {
   background: rgba(255,255,255,0.3);
+}
+
+/* Products Section - New Style */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.product-card {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  transition: all 0.3s;
+}
+
+.product-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+}
+
+.product-image {
+  width: 100%;
+  height: 220px;
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s;
+}
+
+.product-card:hover .product-image img {
+  transform: scale(1.1);
+}
+
+.product-info {
+  padding: 12px;
+  text-align: right;
+}
+
+.product-info h3 {
+  font-size: 14px;
+  margin-bottom: 4px;
+  color: #333;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.product-price {
+  font-size: 18px;
+  font-weight: bold;
+  color: #c21f22;
+  margin-bottom: 6px;
+}
+
+.product-btn {
+  display: inline-block;
+  padding: 7px 22px;
+  background: linear-gradient(135deg, #1e8bc3 0%, #155d7b 100%);
+  color: #fff;
+  text-decoration: none;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(30, 139, 195, 0.4);
+}
+
+.product-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(30, 139, 195, 0.5);
 }
 </style>
