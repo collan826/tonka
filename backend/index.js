@@ -370,12 +370,28 @@ app.post('/api/file/upload', upload.single('file'), (req, res) => {
 
 // ==================== 启动服务 ====================
 
+// 获取本机IP地址
+const os = require('os')
+const getLocalIP = () => {
+  const interfaces = os.networkInterfaces()
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address
+      }
+    }
+  }
+  return 'localhost'
+}
+
+const localIP = getLocalIP()
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`
   ========================================
   🚀 Tonka 后端启动成功！
   📍 本地访问: http://localhost:${PORT}
-  🌐 局域网访问: http://192.168.0.120:${PORT}
+  🌐 局域网访问: http://${localIP}:${PORT}
   💾 数据库: SQLite (tonka.db)
   ========================================
   `)
