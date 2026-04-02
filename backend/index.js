@@ -235,6 +235,78 @@ app.post('/api/auth/logout', (req, res) => {
 
 // ==================== 管理后台 API ====================
 
+// ==================== 产品管理 API ====================
+
+// 获取产品列表（所有产品）
+app.get('/api/admin/products', (req, res) => {
+  const rows = db.prepare('SELECT * FROM product ORDER BY sort_order').all()
+  res.json({ code: 200, data: rows })
+})
+
+// 获取产品详情
+app.get('/api/admin/products/:id', (req, res) => {
+  const { id } = req.params
+  const row = db.prepare('SELECT * FROM product WHERE id = ?').get(id)
+  if (!row) {
+    return res.json({ code: 500, message: '产品不存在' })
+  }
+  res.json({ code: 200, data: row })
+})
+
+// 添加产品
+app.post('/api/admin/products', (req, res) => {
+  const { image_url, name, description, price, original_price, button_text, link, sort_order, is_hot, is_active } = req.body
+  const result = db.prepare(
+    'INSERT INTO product (image_url, name, description, price, original_price, button_text, link, sort_order, is_hot, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  ).run(
+    image_url, name || '', description || '', price || 0, original_price || null, button_text || '加入购物车', link || '#', sort_order || 0, is_hot !== undefined ? is_hot : 0, is_active !== undefined ? is_active : 1
+  )
+  // 如果是热门产品，同时插入到hot_product表（保持兼容）
+  if (is_hot) {
+    db.prepare(
+      'INSERT INTO hot_product (id, image_url, name, price, button_text, link, sort_order, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run(result.lastInsertRowid, image_url, name, price, button_text, link, sort_order, is_active)
+  }
+  res.json({ code: 200, message: '添加成功', data: { id: result.lastInsertRowid } })
+})
+
+// 更新产品
+app.put('/api/admin/products/:id', (req, res) => {
+  const { id } = req.params
+  const { image_url, name, description, price, original_price, button_text, link, sort_order, is_hot, is_active } = req.body
+  db.prepare(
+    'UPDATE product SET image_url = ?, name = ?, description = ?, price = ?, original_price = ?, button_text = ?, link = ?, sort_order = ?, is_hot = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+  ).run(
+    image_url, name, description, price, original_price, button_text, link, sort_order, is_hot, is_active, id
+  )
+  // 同步更新hot_product表
+  if (is_hot) {
+    // 如果是热门产品，更新或插入到hot_product表
+    const exists = db.prepare('SELECT id FROM hot_product WHERE id = ?').get(id)
+    if (exists) {
+      db.prepare(
+        'UPDATE hot_product SET image_url = ?, name = ?, price = ?, button_text = ?, link = ?, sort_order = ?, is_active = ? WHERE id = ?'
+      ).run(image_url, name, price, button_text, link, sort_order, is_active, id)
+    } else {
+      db.prepare(
+        'INSERT INTO hot_product (id, image_url, name, price, button_text, link, sort_order, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+      ).run(id, image_url, name, price, button_text, link, sort_order, is_active)
+    }
+  } else {
+    // 如果不是热门产品，从hot_product表删除
+    db.prepare('DELETE FROM hot_product WHERE id = ?').run(id)
+  }
+  res.json({ code: 200, message: '更新成功' })
+})
+
+// 删除产品
+app.delete('/api/admin/products/:id', (req, res) => {
+  const { id } = req.params
+  db.prepare('DELETE FROM product WHERE id = ?').run(id)
+  db.prepare('DELETE FROM hot_product WHERE id = ?').run(id)
+  res.json({ code: 200, message: '删除成功' })
+})
+
 // ==================== 热门产品管理 API ====================
 
 // 测试API
@@ -242,13 +314,13 @@ app.get('/api/admin/test', (req, res) => {
   res.json({ code: 200, message: '测试成功' })
 })
 
-// 获取热门产品列表（管理后台用）
+// 获取热门产品列表（管理后台用）- 保持兼容
 app.get('/api/admin/hot-products', (req, res) => {
   const rows = db.prepare('SELECT * FROM hot_product ORDER BY sort_order').all()
   res.json({ code: 200, data: rows })
 })
 
-// 获取热门产品详情
+// 获取热门产品详情 - 保持兼容
 app.get('/api/admin/hot-products/:id', (req, res) => {
   const { id } = req.params
   const row = db.prepare('SELECT * FROM hot_product WHERE id = ?').get(id)
@@ -258,30 +330,30 @@ app.get('/api/admin/hot-products/:id', (req, res) => {
   res.json({ code: 200, data: row })
 })
 
-// 添加热门产品
+// 添加热门产品 - 保持兼容
 app.post('/api/admin/hot-products', (req, res) => {
   const { image_url, title, price, button_text, link, sort_order, is_active } = req.body
   const result = db.prepare(
-    'INSERT INTO hot_product (image_url, title, price, button_text, link, sort_order, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO hot_product (image_url, name, price, button_text, link, sort_order, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)'
   ).run(
-    image_url, title || '', price || '', button_text || '立即选购', link || '#', sort_order || 0, is_active !== undefined ? is_active : 1
+    image_url, title || '', price || 0, button_text || '立即选购', link || '#', sort_order || 0, is_active !== undefined ? is_active : 1
   )
   res.json({ code: 200, message: '添加成功', data: { id: result.lastInsertRowid } })
 })
 
-// 更新热门产品
+// 更新热门产品 - 保持兼容
 app.put('/api/admin/hot-products/:id', (req, res) => {
   const { id } = req.params
   const { image_url, title, price, button_text, link, sort_order, is_active } = req.body
   db.prepare(
-    'UPDATE hot_product SET image_url = ?, title = ?, price = ?, button_text = ?, link = ?, sort_order = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+    'UPDATE hot_product SET image_url = ?, name = ?, price = ?, button_text = ?, link = ?, sort_order = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
   ).run(
     image_url, title, price, button_text, link, sort_order, is_active, id
   )
   res.json({ code: 200, message: '更新成功' })
 })
 
-// 删除热门产品
+// 删除热门产品 - 保持兼容
 app.delete('/api/admin/hot-products/:id', (req, res) => {
   const { id } = req.params
   db.prepare('DELETE FROM hot_product WHERE id = ?').run(id)
