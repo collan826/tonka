@@ -280,32 +280,7 @@ const teslaServicesTitle = ref({
   en: 'Tesla Services'
 })
 
-const teslaServices = ref([
-  {
-    image: '/images/煥新-Model-Y.png',
-    title: 'Model Y 煥新',
-    buttonText: '查看詳情',
-    link: '#contact'
-  },
-  {
-    image: '/images/特斯拉必備配件.webp',
-    title: '車體包膜',
-    buttonText: '立即預約',
-    link: '#contact'
-  },
-  {
-    image: '/images/特斯拉鍍膜防曬.webp',
-    title: '鍍膜防曬',
-    buttonText: '立即預約',
-    link: '#contact'
-  },
-  {
-    image: '/images/0701_新Y交車禮包2.jpg',
-    title: '輪胎服務',
-    buttonText: '立即預約',
-    link: '#contact'
-  }
-])
+const teslaServices = ref([])
 
 // 特斯拉专用配件标题
 const teslaAccessoriesTitle = ref({
@@ -314,32 +289,7 @@ const teslaAccessoriesTitle = ref({
 })
 
 // 特斯拉专用配件
-const teslaAccessories = ref([
-  {
-    image: '/images/官網Banner_MOBEIL0316.jpg',
-    title: 'Model Y 專用腳墊',
-    buttonText: '加入購物車',
-    link: '#products'
-  },
-  {
-    image: '/images/煥新-Model-Y.png',
-    title: 'Model 3 煥新套件',
-    buttonText: '加入購物車',
-    link: '#products'
-  },
-  {
-    image: '/images/特斯拉必備配件.webp',
-    title: '特斯拉必備配件',
-    buttonText: '加入購物車',
-    link: '#products'
-  },
-  {
-    image: '/images/特斯拉鍍膜防曬.webp',
-    title: '特斯拉收納盒',
-    buttonText: '加入購物車',
-    link: '#products'
-  }
-])
+const teslaAccessories = ref([])
 
 // 热门产品
 const hotProducts = ref([])
@@ -418,6 +368,48 @@ const fetchHotProducts = async () => {
   }
 }
 
+// 获取专业服务
+const fetchProfessionalServices = async () => {
+  try {
+    const hostname = window.location.hostname
+    const apiPort = hostname === '192.168.0.120' ? '8080' : '3000'
+    const apiBase = 'http://' + hostname + ':' + apiPort
+    const response = await fetch(apiBase + '/api/public/professional-services')
+    const result = await response.json()
+    if (result.code === 200 && result.data && result.data.length > 0) {
+      teslaServices.value = result.data.map(item => ({
+        image: item.image_url.startsWith('http') ? item.image_url : (apiBase + item.image_url),
+        title: item.title || '',
+        buttonText: item.button_text || '查看详情',
+        link: item.link || '#'
+      }))
+    }
+  } catch (error) {
+    console.error('获取专业服务失败:', error)
+  }
+}
+
+// 获取专业配件
+const fetchProfessionalAccessories = async () => {
+  try {
+    const hostname = window.location.hostname
+    const apiPort = hostname === '192.168.0.120' ? '8080' : '3000'
+    const apiBase = 'http://' + hostname + ':' + apiPort
+    const response = await fetch(apiBase + '/api/public/professional-accessories')
+    const result = await response.json()
+    if (result.code === 200 && result.data && result.data.length > 0) {
+      teslaAccessories.value = result.data.map(item => ({
+        image: item.image_url.startsWith('http') ? item.image_url : (apiBase + item.image_url),
+        title: item.title || '',
+        buttonText: item.button_text || '加入购物车',
+        link: item.link || '#'
+      }))
+    }
+  } catch (error) {
+    console.error('获取专业配件失败:', error)
+  }
+}
+
 let autoSlideInterval = null
 
 const nextSlide = () => {
@@ -442,6 +434,8 @@ onMounted(() => {
   fetchConfig()
   fetchBanners()
   fetchHotProducts()
+  fetchProfessionalServices()
+  fetchProfessionalAccessories()
 })
 
 onUnmounted(() => {

@@ -360,6 +360,102 @@ app.delete('/api/admin/hot-products/:id', (req, res) => {
   res.json({ code: 200, message: '删除成功' })
 })
 
+// ==================== 专业服务管理 API ====================
+
+// 获取专业服务列表（管理后台用）
+app.get('/api/admin/professional-services', (req, res) => {
+  const rows = db.prepare('SELECT * FROM professional_service ORDER BY sort_order').all()
+  res.json({ code: 200, data: rows })
+})
+
+// 获取专业服务详情
+app.get('/api/admin/professional-services/:id', (req, res) => {
+  const { id } = req.params
+  const row = db.prepare('SELECT * FROM professional_service WHERE id = ?').get(id)
+  if (!row) {
+    return res.json({ code: 500, message: '专业服务不存在' })
+  }
+  res.json({ code: 200, data: row })
+})
+
+// 添加专业服务
+app.post('/api/admin/professional-services', (req, res) => {
+  const { image_url, title, button_text, link, sort_order, is_active } = req.body
+  const result = db.prepare(
+    'INSERT INTO professional_service (image_url, title, button_text, link, sort_order, is_active) VALUES (?, ?, ?, ?, ?, ?)'
+  ).run(
+    image_url, title || '', button_text || '查看详情', link || '#', sort_order || 0, is_active !== undefined ? is_active : 1
+  )
+  res.json({ code: 200, message: '添加成功', data: { id: result.lastInsertRowid } })
+})
+
+// 更新专业服务
+app.put('/api/admin/professional-services/:id', (req, res) => {
+  const { id } = req.params
+  const { image_url, title, button_text, link, sort_order, is_active } = req.body
+  db.prepare(
+    'UPDATE professional_service SET image_url = ?, title = ?, button_text = ?, link = ?, sort_order = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+  ).run(
+    image_url, title, button_text, link, sort_order, is_active, id
+  )
+  res.json({ code: 200, message: '更新成功' })
+})
+
+// 删除专业服务
+app.delete('/api/admin/professional-services/:id', (req, res) => {
+  const { id } = req.params
+  db.prepare('DELETE FROM professional_service WHERE id = ?').run(id)
+  res.json({ code: 200, message: '删除成功' })
+})
+
+// ==================== 专业配件管理 API ====================
+
+// 获取专业配件列表（管理后台用）
+app.get('/api/admin/professional-accessories', (req, res) => {
+  const rows = db.prepare('SELECT * FROM professional_accessory ORDER BY sort_order').all()
+  res.json({ code: 200, data: rows })
+})
+
+// 获取专业配件详情
+app.get('/api/admin/professional-accessories/:id', (req, res) => {
+  const { id } = req.params
+  const row = db.prepare('SELECT * FROM professional_accessory WHERE id = ?').get(id)
+  if (!row) {
+    return res.json({ code: 500, message: '专业配件不存在' })
+  }
+  res.json({ code: 200, data: row })
+})
+
+// 添加专业配件
+app.post('/api/admin/professional-accessories', (req, res) => {
+  const { image_url, title, button_text, link, sort_order, is_active } = req.body
+  const result = db.prepare(
+    'INSERT INTO professional_accessory (image_url, title, button_text, link, sort_order, is_active) VALUES (?, ?, ?, ?, ?, ?)'
+  ).run(
+    image_url, title || '', button_text || '加入购物车', link || '#', sort_order || 0, is_active !== undefined ? is_active : 1
+  )
+  res.json({ code: 200, message: '添加成功', data: { id: result.lastInsertRowid } })
+})
+
+// 更新专业配件
+app.put('/api/admin/professional-accessories/:id', (req, res) => {
+  const { id } = req.params
+  const { image_url, title, button_text, link, sort_order, is_active } = req.body
+  db.prepare(
+    'UPDATE professional_accessory SET image_url = ?, title = ?, button_text = ?, link = ?, sort_order = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+  ).run(
+    image_url, title, button_text, link, sort_order, is_active, id
+  )
+  res.json({ code: 200, message: '更新成功' })
+})
+
+// 删除专业配件
+app.delete('/api/admin/professional-accessories/:id', (req, res) => {
+  const { id } = req.params
+  db.prepare('DELETE FROM professional_accessory WHERE id = ?').run(id)
+  res.json({ code: 200, message: '删除成功' })
+})
+
 // 获取系统配置（管理后台用）
 app.get('/api/admin/config', (req, res) => {
   const rows = db.prepare('SELECT * FROM sys_config').all()
