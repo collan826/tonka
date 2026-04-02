@@ -24,6 +24,21 @@
           <el-menu-item index="/system/config">系统设置</el-menu-item>
           <el-menu-item index="/system/users">用户管理</el-menu-item>
         </el-sub-menu>
+        <el-sub-menu index="product">
+          <template #title>
+            <el-icon><Goods /></el-icon>
+            <span>产品管理</span>
+          </template>
+          <el-menu-item index="/product/hot-product">热门产品</el-menu-item>
+          <el-menu-item index="/product/product-list">产品列表</el-menu-item>
+        </el-sub-menu>
+        <el-sub-menu index="order">
+          <template #title>
+            <el-icon><Order /></el-icon>
+            <span>订单管理</span>
+          </template>
+          <el-menu-item index="/order/list">订单列表</el-menu-item>
+        </el-sub-menu>
         <el-sub-menu index="page">
           <template #title>
             <el-icon><Document /></el-icon>
@@ -33,7 +48,6 @@
           <el-menu-item index="/page/car-service">汽车服务</el-menu-item>
           <el-menu-item index="/page/professional-service">专业服务</el-menu-item>
           <el-menu-item index="/page/professional-accessory">专业配件</el-menu-item>
-          <el-menu-item index="/page/hot-product">热门产品</el-menu-item>
         </el-sub-menu>
       </el-menu>
     </el-aside>

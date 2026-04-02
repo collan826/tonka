@@ -41,6 +41,38 @@ const routes = [
         ]
       },
       {
+        path: 'product',
+        name: 'Product',
+        meta: { title: '产品管理', icon: 'Goods' },
+        children: [
+          {
+            path: 'hot-product',
+            name: 'ProductHotProduct',
+            component: () => import('../views/page/HotProduct.vue'),
+            meta: { title: '热门产品' }
+          },
+          {
+            path: 'product-list',
+            name: 'ProductList',
+            component: () => import('../views/product/ProductList.vue'),
+            meta: { title: '产品列表' }
+          }
+        ]
+      },
+      {
+        path: 'order',
+        name: 'Order',
+        meta: { title: '订单管理', icon: 'Order' },
+        children: [
+          {
+            path: 'list',
+            name: 'OrderList',
+            component: () => import('../views/order/List.vue'),
+            meta: { title: '订单列表' }
+          }
+        ]
+      },
+      {
         path: 'page',
         name: 'Page',
         meta: { title: '页面管理', icon: 'Document' },
@@ -68,12 +100,6 @@ const routes = [
             name: 'PageProfessionalAccessory',
             component: () => import('../views/page/ProfessionalAccessory.vue'),
             meta: { title: '专业配件' }
-          },
-          {
-            path: 'hot-product',
-            name: 'PageHotProduct',
-            component: () => import('../views/page/HotProduct.vue'),
-            meta: { title: '热门产品' }
           }
         ]
       }

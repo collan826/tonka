@@ -454,6 +454,27 @@ const fetchBanners = async () => {
   }
 }
 
+const fetchHotProducts = async () => {
+  try {
+    const hostname = window.location.hostname
+    const apiPort = hostname === '192.168.0.120' ? '8080' : '3000'
+    const apiBase = 'http://' + hostname + ':' + apiPort
+    const response = await fetch(apiBase + '/api/public/hot-products')
+    const result = await response.json()
+    if (result.code === 200 && result.data && result.data.length > 0) {
+      hotProducts.value = result.data.map(item => ({
+        image: item.image_url.startsWith('http') ? item.image_url : (apiBase + item.image_url),
+        title: item.name || item.title || '',
+        price: item.price || '',
+        buttonText: item.button_text || '立即选购',
+        link: item.link || '#'
+      }))
+    }
+  } catch (error) {
+    console.error('获取热门产品失败:', error)
+  }
+}
+
 let autoSlideInterval = null
 
 const nextSlide = () => {
@@ -477,6 +498,7 @@ onMounted(() => {
   adminUrl.value = 'http://' + hostname + ':' + adminPort
   fetchConfig()
   fetchBanners()
+  fetchHotProducts()
 })
 
 onUnmounted(() => {

@@ -113,7 +113,9 @@ const pageTitle = computed(() => {
     '/page/car-service': '汽车服务',
     '/page/professional-service': '专业服务',
     '/page/professional-accessory': '专业配件',
-    '/page/hot-product': '热门产品'
+    '/product/hot-product': '热门产品',
+    '/product/product-list': '产品列表',
+    '/order/list': '订单列表'
   }
   return titles[route.path] || '页面'
 })

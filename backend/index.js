@@ -235,6 +235,59 @@ app.post('/api/auth/logout', (req, res) => {
 
 // ==================== 管理后台 API ====================
 
+// ==================== 热门产品管理 API ====================
+
+// 测试API
+app.get('/api/admin/test', (req, res) => {
+  res.json({ code: 200, message: '测试成功' })
+})
+
+// 获取热门产品列表（管理后台用）
+app.get('/api/admin/hot-products', (req, res) => {
+  const rows = db.prepare('SELECT * FROM hot_product ORDER BY sort_order').all()
+  res.json({ code: 200, data: rows })
+})
+
+// 获取热门产品详情
+app.get('/api/admin/hot-products/:id', (req, res) => {
+  const { id } = req.params
+  const row = db.prepare('SELECT * FROM hot_product WHERE id = ?').get(id)
+  if (!row) {
+    return res.json({ code: 500, message: '产品不存在' })
+  }
+  res.json({ code: 200, data: row })
+})
+
+// 添加热门产品
+app.post('/api/admin/hot-products', (req, res) => {
+  const { image_url, title, price, button_text, link, sort_order, is_active } = req.body
+  const result = db.prepare(
+    'INSERT INTO hot_product (image_url, title, price, button_text, link, sort_order, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  ).run(
+    image_url, title || '', price || '', button_text || '立即选购', link || '#', sort_order || 0, is_active !== undefined ? is_active : 1
+  )
+  res.json({ code: 200, message: '添加成功', data: { id: result.lastInsertRowid } })
+})
+
+// 更新热门产品
+app.put('/api/admin/hot-products/:id', (req, res) => {
+  const { id } = req.params
+  const { image_url, title, price, button_text, link, sort_order, is_active } = req.body
+  db.prepare(
+    'UPDATE hot_product SET image_url = ?, title = ?, price = ?, button_text = ?, link = ?, sort_order = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+  ).run(
+    image_url, title, price, button_text, link, sort_order, is_active, id
+  )
+  res.json({ code: 200, message: '更新成功' })
+})
+
+// 删除热门产品
+app.delete('/api/admin/hot-products/:id', (req, res) => {
+  const { id } = req.params
+  db.prepare('DELETE FROM hot_product WHERE id = ?').run(id)
+  res.json({ code: 200, message: '删除成功' })
+})
+
 // 获取系统配置（管理后台用）
 app.get('/api/admin/config', (req, res) => {
   const rows = db.prepare('SELECT * FROM sys_config').all()
@@ -246,7 +299,7 @@ app.get('/api/admin/config', (req, res) => {
 })
 
 // 保存系统配置
-app.post('/api/admin/config', express.json(), (req, res) => {
+app.post('/api/admin/config', (req, res) => {
   const configData = req.body
 
   Object.keys(configData).forEach(key => {
@@ -274,7 +327,7 @@ app.get('/api/admin/banners', (req, res) => {
 })
 
 // 添加轮播图
-app.post('/api/admin/banners', express.json(), (req, res) => {
+app.post('/api/admin/banners', (req, res) => {
   const { image_url, title, subtitle, button_text, link, sort_order, is_active } = req.body
   const result = db.prepare(
     'INSERT INTO banner (image_url, title, subtitle, button_text, link, sort_order, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)'
@@ -285,7 +338,7 @@ app.post('/api/admin/banners', express.json(), (req, res) => {
 })
 
 // 更新轮播图
-app.put('/api/admin/banners/:id', express.json(), (req, res) => {
+app.put('/api/admin/banners/:id', (req, res) => {
   const { id } = req.params
   const { image_url, title, subtitle, button_text, link, sort_order, is_active } = req.body
   db.prepare(
