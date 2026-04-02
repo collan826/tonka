@@ -748,6 +748,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  border-radius: 12px;
 }
 
 .product-image img {
