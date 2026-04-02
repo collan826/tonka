@@ -342,64 +342,7 @@ const teslaAccessories = ref([
 ])
 
 // 热门产品
-const hotProducts = ref([
-  {
-    image: '/images/煥新-Model-Y.png',
-    title: 'Model Y 煥新套件',
-    price: '¥2,999',
-    buttonText: '加入購物車',
-    link: '#contact'
-  },
-  {
-    image: '/images/特斯拉必備配件.webp',
-    title: '特斯拉必備配件套裝',
-    price: '¥1,299',
-    buttonText: '加入購物車',
-    link: '#contact'
-  },
-  {
-    image: '/images/特斯拉鍍膜防曬.webp',
-    title: '高級鍍膜防曬服務',
-    price: '¥3,599',
-    buttonText: '立即預約',
-    link: '#contact'
-  },
-  {
-    image: '/images/0701_新Y交車禮包2.jpg',
-    title: 'Model Y 交車禮包',
-    price: '¥899',
-    buttonText: '加入購物車',
-    link: '#contact'
-  },
-  {
-    image: '/images/官網Banner_MOBEIL0316.jpg',
-    title: 'Model Y 專用腳墊',
-    price: '¥599',
-    buttonText: '加入購物車',
-    link: '#contact'
-  },
-  {
-    image: '/images/煥新-Model-Y.png',
-    title: 'Model 3 煥新套件',
-    price: '¥2,799',
-    buttonText: '加入購物車',
-    link: '#contact'
-  },
-  {
-    image: '/images/特斯拉必備配件.webp',
-    title: '特斯拉收納盒套裝',
-    price: '¥399',
-    buttonText: '加入購物車',
-    link: '#contact'
-  },
-  {
-    image: '/images/特斯拉鍍膜防曬.webp',
-    title: '輪胎升級服務',
-    price: '¥1,999',
-    buttonText: '立即預約',
-    link: '#contact'
-  }
-])
+const hotProducts = ref([])
 
 const slides = ref([
   {
