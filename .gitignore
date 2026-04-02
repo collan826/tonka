@@ -1,7 +1,7 @@
-# 数据库文件
-*.db
-*.sqlite
-*.sqlite3
+# 数据库文件（现在包含在git中，方便同步）
+# *.db
+# *.sqlite
+# *.sqlite3
 
 # 依赖
 node_modules/
