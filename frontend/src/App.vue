@@ -170,11 +170,93 @@
           <div class="product-info">
             <h3>{{ product.title }}</h3>
             <div class="product-price">{{ product.price }}</div>
-            <a :href="product.link" class="product-btn">{{ product.buttonText }}</a>
+            <button @click="addToCart(product)" class="product-btn">{{ product.buttonText }}</button>
           </div>
         </div>
       </div>
     </section>
+
+    <!-- 购物车图标 -->
+    <div v-if="isLoggedIn" class="cart-icon" @click="cartVisible = !cartVisible">
+      <svg t="1712048000000" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="5120" width="32" height="32">
+        <path d="M901.12 341.333333c15.701333 0 28.586667 12.885333 28.586667 28.586667 0 15.701333-12.885333 28.586667-28.586667 28.586667H303.36l59.733333 201.813333 405.76 0 14.677333-51.2c3.584-12.885333 16.042667-22.186667 29.781333-22.186667 17.92 0 31.914667 14.506667 31.914667 32.256 0 8.192-2.56 16.042667-7.168 22.528l-96.768 243.2c-7.168 17.92-24.917333 29.269333-44.288 29.269333H279.253333c-19.370667 0-37.12-11.349333-44.288-29.269333L98.816 285.354667c-4.608-6.485333-7.168-14.336-7.168-22.528 0-17.749333 13.994667-32.256 31.914667-32.256h87.552l38.485333-129.877333c3.584-12.202667 15.018667-20.992 28.16-20.992h468.394667c15.701333 0 28.586667 12.885333 28.586667 28.586667 0 15.701333-12.885333 28.586667-28.586667 28.586667z" fill="#000000" p-id="5121"></path>
+        <path d="M291.242667 775.082667m-44.629334 0a44.629333 44.629333 0 1 0 89.258668 0 44.629333 44.629333 0 1 0-89.258668 0Z" fill="#000000" p-id="5122"></path>
+        <path d="M706.986667 775.082667m-44.629334 0a44.629333 44.629333 0 1 0 89.258668 0 44.629333 44.629333 0 1 0-89.258668 0Z" fill="#000000" p-id="5123"></path>
+      </svg>
+      <span v-if="cart.length > 0" class="cart-count">{{ cart.length }}</span>
+    </div>
+
+    <!-- 购物车弹窗 -->
+    <div v-if="cartVisible && cart.length > 0" class="cart-popup">
+      <div class="cart-header">
+        <h3>购物车</h3>
+        <button @click="cartVisible = false" class="cart-close">×</button>
+      </div>
+      <div class="cart-items">
+        <div v-for="(item, index) in cart" :key="index" class="cart-item">
+          <img :src="item.image" :alt="item.title" class="cart-item-image" />
+          <div class="cart-item-info">
+            <h4>{{ item.title }}</h4>
+            <p>{{ item.price }}</p>
+            <p>数量：{{ item.quantity }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 登录/注册弹窗 -->
+    <el-dialog v-model="showAuthDialog" :title="authMode === 'login' ? '登录' : '注册'" width="400px">
+      <el-form v-if="authMode === 'login'" :model="loginForm" label-width="80px">
+        <el-form-item label="用户名">
+          <el-input v-model="loginForm.username" placeholder="请输入用户名" />
+        </el-form-item>
+        <el-form-item label="密码">
+          <el-input v-model="loginForm.password" type="password" placeholder="请输入密码" />
+        </el-form-item>
+      </el-form>
+      <el-form v-else :model="registerForm" label-width="80px">
+        <el-form-item label="用户名">
+          <el-input v-model="registerForm.username" placeholder="请输入用户名" />
+        </el-form-item>
+        <el-form-item label="密码">
+          <el-input v-model="registerForm.password" type="password" placeholder="请输入密码" />
+        </el-form-item>
+        <el-form-item label="确认密码">
+          <el-input v-model="registerForm.confirmPassword" type="password" placeholder="请再次输入密码" />
+        </el-form-item>
+        <el-form-item label="姓名">
+          <el-input v-model="registerForm.name" placeholder="请输入姓名" />
+        </el-form-item>
+        <el-form-item label="年龄">
+          <el-input-number v-model="registerForm.age" :min="0" placeholder="请输入年龄" />
+        </el-form-item>
+        <el-form-item label="性别">
+          <el-select v-model="registerForm.gender" placeholder="请选择性别">
+            <el-option label="男" value="男" />
+            <el-option label="女" value="女" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="邮箱">
+          <el-input v-model="registerForm.email" placeholder="请输入邮箱（可选）" />
+        </el-form-item>
+        <el-form-item label="手机号">
+          <el-input v-model="registerForm.phone" placeholder="请输入手机号（可选）" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <a href="#" @click.prevent="authMode = authMode === 'login' ? 'register' : 'login'">
+            {{ authMode === 'login' ? '还没有账号？去注册' : '已有账号？去登录' }}
+          </a>
+          <div>
+            <el-button @click="showAuthDialog = false">取消</el-button>
+            <el-button type="primary" @click="authMode === 'login' ? handleLogin() : handleRegister()">
+              {{ authMode === 'login' ? '登录' : '注册' }}
+            </el-button>
+          </div>
+        </div>
+      </template>
+    </el-dialog>
 
     <!-- Info Section -->
     <section class="info-section" id="about">
@@ -356,9 +438,10 @@ const fetchHotProducts = async () => {
     const result = await response.json()
     if (result.code === 200 && result.data && result.data.length > 0) {
       hotProducts.value = result.data.map(item => ({
+        id: item.id,
         image: item.image_url.startsWith('http') ? item.image_url : (apiBase + item.image_url),
         title: item.name || item.title || '',
-        price: item.price || '',
+        price: item.price || '¥199',
         buttonText: item.button_text || '立即选购',
         link: item.link || '#'
       }))
@@ -366,6 +449,124 @@ const fetchHotProducts = async () => {
   } catch (error) {
     console.error('获取热门产品失败:', error)
   }
+}
+
+// 购物车
+const cart = ref([])
+const cartVisible = ref(false)
+
+// 添加到购物车
+const addToCart = (product) => {
+  if (!isLoggedIn.value) {
+    showAuthDialog.value = true
+    return
+  }
+  const existingItem = cart.value.find(item => item.id === product.id)
+  if (existingItem) {
+    existingItem.quantity += 1
+  } else {
+    cart.value.push({
+      ...product,
+      quantity: 1
+    })
+  }
+  ElMessage.success('已添加到购物车！')
+}
+
+// 登录/注册弹窗
+const showAuthDialog = ref(false)
+const authMode = ref('login') // 'login' or 'register'
+const loginForm = ref({
+  username: '',
+  password: ''
+})
+const registerForm = ref({
+  username: '',
+  password: '',
+  confirmPassword: '',
+  name: '',
+  age: '',
+  gender: '',
+  email: '',
+  phone: ''
+})
+
+// 登录
+const handleLogin = async () => {
+  try {
+    const hostname = window.location.hostname
+    const apiPort = hostname === '192.168.0.120' ? '8080' : '3000'
+    const apiBase = 'http://' + hostname + ':' + apiPort
+    const response = await fetch(apiBase + '/api/user/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: loginForm.value.username,
+        password: loginForm.value.password
+      })
+    })
+    const result = await response.json()
+    if (result.code === 200 && result.data && result.data.token) {
+      localStorage.setItem('token', result.data.token)
+      localStorage.setItem('username', loginForm.value.username)
+      isLoggedIn.value = true
+      userName.value = loginForm.value.username
+      showAuthDialog.value = false
+      ElMessage.success('登录成功！')
+    } else {
+      ElMessage.error(result.message || '登录失败')
+    }
+  } catch (error) {
+    console.error('登录失败:', error)
+    ElMessage.error('登录失败')
+  }
+}
+
+// 注册
+const handleRegister = async () => {
+  if (registerForm.value.password !== registerForm.value.confirmPassword) {
+    ElMessage.error('两次密码输入不一致')
+    return
+  }
+  try {
+    const hostname = window.location.hostname
+    const apiPort = hostname === '192.168.0.120' ? '8080' : '3000'
+    const apiBase = 'http://' + hostname + ':' + apiPort
+    const response = await fetch(apiBase + '/api/user/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: registerForm.value.username,
+        password: registerForm.value.password,
+        name: registerForm.value.name,
+        age: registerForm.value.age,
+        gender: registerForm.value.gender,
+        email: registerForm.value.email,
+        phone: registerForm.value.phone
+      })
+    })
+    const result = await response.json()
+    if (result.code === 200) {
+      ElMessage.success('注册成功！请登录')
+      authMode.value = 'login'
+      loginForm.value.username = registerForm.value.username
+    } else {
+      ElMessage.error(result.message || '注册失败')
+    }
+  } catch (error) {
+    console.error('注册失败:', error)
+    ElMessage.error('注册失败')
+  }
+}
+
+// 退出登录
+const handleLogout = () => {
+  localStorage.removeItem('token')
+  localStorage.removeItem('username')
+  isLoggedIn.value = false
+  userName.value = ''
+  cart.value = []
+  ElMessage.success('已退出登录')
 }
 
 // 获取专业服务
@@ -792,5 +993,130 @@ onUnmounted(() => {
 .product-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(30, 139, 195, 0.5);
+}
+
+/* 购物车图标 */
+.cart-icon {
+  position: fixed;
+  right: 30px;
+  bottom: 30px;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #1e8bc3 0%, #155d7b 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(30, 139, 195, 0.4);
+  transition: all 0.3s;
+  z-index: 999;
+}
+
+.cart-icon:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(30, 139, 195, 0.5);
+}
+
+.cart-icon .icon {
+  width: 28px;
+  height: 28px;
+  fill: white;
+}
+
+.cart-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #c21f22;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* 购物车弹窗 */
+.cart-popup {
+  position: fixed;
+  right: 30px;
+  bottom: 100px;
+  width: 320px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.cart-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cart-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.cart-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #999;
+  padding: 0;
+  line-height: 1;
+}
+
+.cart-close:hover {
+  color: #333;
+}
+
+.cart-items {
+  padding: 10px;
+}
+
+.cart-item {
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.cart-item:last-child {
+  border-bottom: none;
+}
+
+.cart-item-image {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.cart-item-info {
+  flex: 1;
+}
+
+.cart-item-info h4 {
+  margin: 0 0 5px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.cart-item-info p {
+  margin: 3px 0;
+  font-size: 12px;
+  color: #666;
 }
 </style>

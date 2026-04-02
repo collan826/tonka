@@ -173,7 +173,69 @@ initDatabase()
 
 // ==================== 认证相关 API ====================
 
-// 登录
+// 普通用户注册
+app.post('/api/user/register', (req, res) => {
+  const { username, password, name, age, gender, email, phone } = req.body
+
+  if (!username || !password) {
+    return res.json({ code: 500, message: '用户名和密码不能为空' })
+  }
+
+  // 检查用户名是否已存在
+  const exists = db.prepare('SELECT id FROM user WHERE username = ?').get(username)
+  if (exists) {
+    return res.json({ code: 500, message: '用户名已存在' })
+  }
+
+  // 创建用户
+  const hashedPassword = bcrypt.hashSync(password, 10)
+  const result = db.prepare(
+    'INSERT INTO user (username, password, name, age, gender, email, phone, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+  ).run(
+    username, hashedPassword, name || '', age || null, gender || '', email || '', phone || '', 1
+  )
+
+  res.json({ code: 200, message: '注册成功' })
+})
+
+// 普通用户登录
+app.post('/api/user/login', (req, res) => {
+  const { username, password } = req.body
+
+  const user = db.prepare('SELECT * FROM user WHERE username = ?').get(username)
+  if (!user) {
+    return res.json({ code: 500, message: '用户名或密码错误' })
+  }
+
+  if (user.status !== 1) {
+    return res.json({ code: 500, message: '账号已禁用' })
+  }
+
+  const passwordMatch = bcrypt.compareSync(password, user.password)
+  if (!passwordMatch) {
+    return res.json({ code: 500, message: '用户名或密码错误' })
+  }
+
+  const token = jwt.sign({ id: user.id, username: user.username, type: 'user' }, JWT_SECRET, { expiresIn: '72h' })
+
+  db.prepare('UPDATE user SET updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(user.id)
+
+  res.json({
+    code: 200,
+    message: '登录成功',
+    data: {
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        name: user.name,
+        type: 'user'
+      }
+    }
+  })
+})
+
+// 登录（管理员）
 app.post('/api/auth/login', (req, res) => {
   const { username, password } = req.body
 
