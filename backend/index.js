@@ -297,6 +297,69 @@ app.post('/api/auth/logout', (req, res) => {
 
 // ==================== 管理后台 API ====================
 
+// ==================== 普通用户管理 API ====================
+
+// 获取普通用户列表（管理后台用）
+app.get('/api/admin/users', (req, res) => {
+  const rows = db.prepare('SELECT * FROM user ORDER BY created_at DESC').all()
+  res.json({ code: 200, data: rows })
+})
+
+// 获取普通用户详情
+app.get('/api/admin/users/:id', (req, res) => {
+  const { id } = req.params
+  const row = db.prepare('SELECT * FROM user WHERE id = ?').get(id)
+  if (!row) {
+    return res.json({ code: 500, message: '用户不存在' })
+  }
+  res.json({ code: 200, data: row })
+})
+
+// 添加普通用户
+app.post('/api/admin/users', (req, res) => {
+  const { username, password, name, age, gender, email, phone, status } = req.body
+  if (!username || !password) {
+    return res.json({ code: 500, message: '用户名和密码不能为空' })
+  }
+  // 检查用户名是否已存在
+  const exists = db.prepare('SELECT id FROM user WHERE username = ?').get(username)
+  if (exists) {
+    return res.json({ code: 500, message: '用户名已存在' })
+  }
+  const hashedPassword = bcrypt.hashSync(password, 10)
+  const result = db.prepare(
+    'INSERT INTO user (username, password, name, age, gender, email, phone, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+  ).run(
+    username, hashedPassword, name || '', age || null, gender || '', email || '', phone || '', status !== undefined ? status : 1
+  )
+  res.json({ code: 200, message: '添加成功', data: { id: result.lastInsertRowid } })
+})
+
+// 更新普通用户
+app.put('/api/admin/users/:id', (req, res) => {
+  const { id } = req.params
+  const { username, name, age, gender, email, phone, status } = req.body
+  // 如果提供了密码，也更新密码
+  if (req.body.password) {
+    const hashedPassword = bcrypt.hashSync(req.body.password, 10)
+    db.prepare(
+      'UPDATE user SET username = ?, password = ?, name = ?, age = ?, gender = ?, email = ?, phone = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+    ).run(username, hashedPassword, name || '', age || null, gender || '', email || '', phone || '', status !== undefined ? status : 1, id)
+  } else {
+    db.prepare(
+      'UPDATE user SET username = ?, name = ?, age = ?, gender = ?, email = ?, phone = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+    ).run(username, name || '', age || null, gender || '', email || '', phone || '', status !== undefined ? status : 1, id)
+  }
+  res.json({ code: 200, message: '更新成功' })
+})
+
+// 删除普通用户
+app.delete('/api/admin/users/:id', (req, res) => {
+  const { id } = req.params
+  db.prepare('DELETE FROM user WHERE id = ?').run(id)
+  res.json({ code: 200, message: '删除成功' })
+})
+
 // ==================== 产品管理 API ====================
 
 // 获取产品列表（所有产品）

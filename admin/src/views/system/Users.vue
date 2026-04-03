@@ -8,10 +8,10 @@
         </div>
       </template>
 
-      <el-table :data="userList" border style="width: 100%;">
+      <el-table :data="userList" border style="width: 100%;" v-loading="loading">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="username" label="用户名" width="150" />
-        <el-table-column prop="real_name" label="姓名" width="120" />
+        <el-table-column prop="name" label="姓名" width="120" />
         <el-table-column prop="phone" label="电话" width="150" />
         <el-table-column prop="email" label="邮箱" width="200" />
         <el-table-column prop="status" label="状态" width="100">
@@ -41,7 +41,16 @@
           <el-input v-model="userForm.password" type="password" placeholder="请输入密码" />
         </el-form-item>
         <el-form-item label="姓名">
-          <el-input v-model="userForm.real_name" placeholder="请输入姓名" />
+          <el-input v-model="userForm.name" placeholder="请输入姓名" />
+        </el-form-item>
+        <el-form-item label="年龄">
+          <el-input-number v-model="userForm.age" :min="0" placeholder="请输入年龄" />
+        </el-form-item>
+        <el-form-item label="性别">
+          <el-select v-model="userForm.gender" placeholder="请选择性别">
+            <el-option label="男" value="男" />
+            <el-option label="女" value="女" />
+          </el-select>
         </el-form-item>
         <el-form-item label="电话">
           <el-input v-model="userForm.phone" placeholder="请输入电话" />
@@ -65,35 +74,44 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import request from '@/api/request'
 
 const loading = ref(false)
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const dialogTitle = ref('')
 
-const userList = ref([
-  {
-    id: 1,
-    username: 'testuser',
-    real_name: '测试用户',
-    phone: '13800138000',
-    email: 'test@example.com',
-    status: 1,
-    created_at: '2026-03-30 10:00:00'
-  }
-])
+const userList = ref([])
 
 const userForm = reactive({
   id: null,
   username: '',
   password: '',
-  real_name: '',
+  name: '',
+  age: null,
+  gender: '',
   phone: '',
   email: '',
   status: 1
 })
+
+// 获取用户列表
+const fetchUserList = async () => {
+  loading.value = true
+  try {
+    const res = await request.get('/api/admin/users')
+    if (res.code === 200) {
+      userList.value = res.data
+    }
+  } catch (error) {
+    console.error('获取用户列表失败:', error)
+    ElMessage.error('获取用户列表失败')
+  } finally {
+    loading.value = false
+  }
+}
 
 const handleAdd = () => {
   isEdit.value = false
@@ -102,7 +120,9 @@ const handleAdd = () => {
     id: null,
     username: '',
     password: '',
-    real_name: '',
+    name: '',
+    age: null,
+    gender: '',
     phone: '',
     email: '',
     status: 1
@@ -122,19 +142,45 @@ const handleDelete = (row) => {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
-  }).then(() => {
-    ElMessage.success('删除成功！（演示版，暂未实现后端删除）')
+  }).then(async () => {
+    try {
+      const res = await request.delete(`/api/admin/users/${row.id}`)
+      if (res.code === 200) {
+        ElMessage.success('删除成功！')
+        fetchUserList()
+      }
+    } catch (error) {
+      console.error('删除用户失败:', error)
+      ElMessage.error('删除用户失败')
+    }
   }).catch(() => {})
 }
 
-const handleSave = () => {
+const handleSave = async () => {
   loading.value = true
-  setTimeout(() => {
+  try {
+    let res
+    if (isEdit.value) {
+      res = await request.put(`/api/admin/users/${userForm.id}`, userForm)
+    } else {
+      res = await request.post('/api/admin/users', userForm)
+    }
+    if (res.code === 200) {
+      ElMessage.success(isEdit.value ? '更新成功！' : '添加成功！')
+      dialogVisible.value = false
+      fetchUserList()
+    }
+  } catch (error) {
+    console.error('保存用户失败:', error)
+    ElMessage.error('保存用户失败')
+  } finally {
     loading.value = false
-    dialogVisible.value = false
-    ElMessage.success('保存成功！（演示版，暂未实现后端保存）')
-  }, 1000)
+  }
 }
+
+onMounted(() => {
+  fetchUserList()
+})
 </script>
 
 <style scoped>
