@@ -10,7 +10,7 @@
         <div class="top-bar-right">
           <div class="user-info">
             <span v-if="isLoggedIn" class="welcome-text">👋 欢迎，{{ userName }}</span>
-            <a v-else href="#login" class="login-link">登录 / 注册</a>
+            <button v-else @click="showAuthDialog = true" class="login-link">登录 / 注册</button>
           </div>
         </div>
       </div>
@@ -323,6 +323,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { ElMessage } from 'element-plus'
 
 const currentSlide = ref(0)
 const adminUrl = ref('')
