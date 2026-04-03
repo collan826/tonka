@@ -198,10 +198,21 @@
           <img :src="item.image" :alt="item.title" class="cart-item-image" />
           <div class="cart-item-info">
             <h4>{{ item.title }}</h4>
-            <p>{{ item.price }}</p>
-            <p>数量：{{ item.quantity }}</p>
+            <p class="cart-item-price">{{ item.price }}</p>
+            <div class="cart-item-quantity">
+              <button @click="decreaseQuantity(item)" class="quantity-btn">-</button>
+              <span class="quantity-num">{{ item.quantity }}</span>
+              <button @click="increaseQuantity(item)" class="quantity-btn">+</button>
+            </div>
           </div>
+          <button @click="removeFromCart(item)" class="cart-item-delete">×</button>
         </div>
+      </div>
+      <div class="cart-footer">
+        <div class="cart-total">
+          总计：<span class="total-price">¥{{ calculateTotalPrice().toFixed(2) }}</span>
+        </div>
+        <button @click="handleCheckout" class="checkout-btn">去结算</button>
       </div>
     </div>
 
@@ -507,6 +518,41 @@ const fetchHotProducts = async () => {
 const cart = ref([])
 const cartVisible = ref(false)
 
+// 获取购物车存储的 key（按用户存储）
+const getCartStorageKey = () => {
+  const username = localStorage.getItem('username')
+  return username ? `cart_${username}` : 'cart_guest'
+}
+
+// 保存购物车到 localStorage
+const saveCartToStorage = () => {
+  const key = getCartStorageKey()
+  localStorage.setItem(key, JSON.stringify(cart.value))
+}
+
+// 从 localStorage 加载购物车
+const loadCartFromStorage = () => {
+  const key = getCartStorageKey()
+  const savedCart = localStorage.getItem(key)
+  if (savedCart) {
+    try {
+      cart.value = JSON.parse(savedCart)
+    } catch (e) {
+      console.error('加载购物车失败:', e)
+      cart.value = []
+    }
+  }
+}
+
+// 计算购物车总价
+const calculateTotalPrice = () => {
+  return cart.value.reduce((total, item) => {
+    // 解析价格，去掉 ¥ 符号
+    const price = parseFloat(item.price.replace(/[^0-9.]/g, '')) || 0
+    return total + (price * item.quantity)
+  }, 0)
+}
+
 // 购物车图标点击
 const handleCartClick = () => {
   if (!isLoggedIn.value) {
@@ -531,7 +577,49 @@ const addToCart = (product) => {
       quantity: 1
     })
   }
+  saveCartToStorage()
   ElMessage.success('已添加到购物车！')
+}
+
+// 增加商品数量
+const increaseQuantity = (item) => {
+  item.quantity += 1
+  saveCartToStorage()
+}
+
+// 减少商品数量
+const decreaseQuantity = (item) => {
+  if (item.quantity > 1) {
+    item.quantity -= 1
+  } else {
+    removeFromCart(item)
+    return
+  }
+  saveCartToStorage()
+}
+
+// 从购物车删除商品
+const removeFromCart = (item) => {
+  const index = cart.value.findIndex(i => i.id === item.id)
+  if (index > -1) {
+    cart.value.splice(index, 1)
+    saveCartToStorage()
+    ElMessage.success('已从购物车移除')
+  }
+}
+
+// 结算
+const handleCheckout = () => {
+  if (cart.value.length === 0) {
+    ElMessage.warning('购物车是空的')
+    return
+  }
+  const total = calculateTotalPrice()
+  ElMessage.success(`结算成功！总金额：¥${total.toFixed(2)}`)
+  // 清空购物车
+  cart.value = []
+  saveCartToStorage()
+  cartVisible.value = false
 }
 
 // 登录/注册弹窗
@@ -572,6 +660,8 @@ const handleLogin = async () => {
       localStorage.setItem('username', loginForm.value.username)
       isLoggedIn.value = true
       userName.value = loginForm.value.username
+      // 登录成功后加载该用户的购物车
+      loadCartFromStorage()
       showAuthDialog.value = false
       ElMessage.success('登录成功！')
     } else {
@@ -622,11 +712,15 @@ const handleRegister = async () => {
 
 // 退出登录
 const handleLogout = () => {
+  // 先保存当前用户的购物车
+  saveCartToStorage()
+  // 清除登录信息
   localStorage.removeItem('token')
   localStorage.removeItem('username')
   isLoggedIn.value = false
   userName.value = ''
   cart.value = []
+  cartVisible.value = false
   ElMessage.success('已退出登录')
 }
 
@@ -700,6 +794,8 @@ onMounted(() => {
   if (savedToken && savedUsername) {
     isLoggedIn.value = true
     userName.value = savedUsername
+    // 登录后加载购物车数据
+    loadCartFromStorage()
   }
   
   fetchConfig()
@@ -1205,6 +1301,105 @@ onUnmounted(() => {
   margin: 3px 0;
   font-size: 12px;
   color: #666;
+}
+
+.cart-item-price {
+  font-size: 14px;
+  font-weight: bold;
+  color: #c21f22;
+  margin: 5px 0;
+}
+
+.cart-item-quantity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 5px;
+}
+
+.quantity-btn {
+  width: 24px;
+  height: 24px;
+  border: 1px solid #ddd;
+  background: #f5f5f5;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.quantity-btn:hover {
+  background: #1e8bc3;
+  color: white;
+  border-color: #1e8bc3;
+}
+
+.quantity-num {
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 20px;
+  text-align: center;
+}
+
+.cart-item-delete {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: rgba(255, 100, 100, 0.1);
+  color: #ff6464;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  align-self: flex-start;
+  margin-top: 5px;
+}
+
+.cart-item-delete:hover {
+  background: rgba(255, 100, 100, 0.2);
+}
+
+.cart-footer {
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cart-total {
+  font-size: 16px;
+  color: #333;
+}
+
+.total-price {
+  font-size: 20px;
+  font-weight: bold;
+  color: #c21f22;
+}
+
+.checkout-btn {
+  padding: 10px 30px;
+  background: linear-gradient(135deg, #1e8bc3 0%, #155d7b 100%);
+  color: white;
+  border: none;
+  border-radius: 25px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(30, 139, 195, 0.4);
+}
+
+.checkout-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(30, 139, 195, 0.5);
 }
 
 </style>
