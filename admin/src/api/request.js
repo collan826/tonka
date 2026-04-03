@@ -3,7 +3,7 @@ import { ElMessage } from 'element-plus'
 
 const getApiBase = () => {
   const hostname = window.location.hostname
-  const apiPort = hostname === '192.168.0.120' ? '8080' : '3000'
+  const apiPort = '8080'
   return 'http://' + hostname + ':' + apiPort
 }
 

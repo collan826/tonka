@@ -357,7 +357,7 @@ const sysConfig = ref({
 const fetchConfig = async () => {
   try {
     const hostname = window.location.hostname
-    const apiPort = hostname === '192.168.0.120' ? '8080' : '3000'
+    const apiPort = '8080'
     const apiBase = 'http://' + hostname + ':' + apiPort
     const response = await fetch(apiBase + '/api/public/config')
     const result = await response.json()
@@ -474,7 +474,7 @@ const slides = ref([
 const fetchBanners = async () => {
   try {
     const hostname = window.location.hostname
-    const apiPort = hostname === '192.168.0.120' ? '8080' : '3000'
+    const apiPort = '8080'
     const apiBase = 'http://' + hostname + ':' + apiPort
     const response = await fetch(apiBase + '/api/public/banners')
     const result = await response.json()
@@ -495,7 +495,7 @@ const fetchBanners = async () => {
 const fetchHotProducts = async () => {
   try {
     const hostname = window.location.hostname
-    const apiPort = hostname === '192.168.0.120' ? '8080' : '3000'
+    const apiPort = '8080'
     const apiBase = 'http://' + hostname + ':' + apiPort
     const response = await fetch(apiBase + '/api/public/hot-products')
     const result = await response.json()
@@ -644,7 +644,7 @@ const registerForm = ref({
 const handleLogin = async () => {
   try {
     const hostname = window.location.hostname
-    const apiPort = hostname === '192.168.0.120' ? '8080' : '3000'
+    const apiPort = '8080'
     const apiBase = 'http://' + hostname + ':' + apiPort
     const response = await fetch(apiBase + '/api/user/login', {
       method: 'POST',
@@ -681,7 +681,7 @@ const handleRegister = async () => {
   }
   try {
     const hostname = window.location.hostname
-    const apiPort = hostname === '192.168.0.120' ? '8080' : '3000'
+    const apiPort = '8080'
     const apiBase = 'http://' + hostname + ':' + apiPort
     const response = await fetch(apiBase + '/api/user/register', {
       method: 'POST',
@@ -728,7 +728,7 @@ const handleLogout = () => {
 const fetchProfessionalServices = async () => {
   try {
     const hostname = window.location.hostname
-    const apiPort = hostname === '192.168.0.120' ? '8080' : '3000'
+    const apiPort = '8080'
     const apiBase = 'http://' + hostname + ':' + apiPort
     const response = await fetch(apiBase + '/api/public/professional-services')
     const result = await response.json()
@@ -749,7 +749,7 @@ const fetchProfessionalServices = async () => {
 const fetchProfessionalAccessories = async () => {
   try {
     const hostname = window.location.hostname
-    const apiPort = hostname === '192.168.0.120' ? '8080' : '3000'
+    const apiPort = '8080'
     const apiBase = 'http://' + hostname + ':' + apiPort
     const response = await fetch(apiBase + '/api/public/professional-accessories')
     const result = await response.json()
@@ -785,7 +785,7 @@ onMounted(() => {
     nextSlide()
   }, 5000)
   const hostname = window.location.hostname
-  const adminPort = hostname === '192.168.0.120' ? '1025' : '1026'
+  const adminPort = '1025'
   adminUrl.value = 'http://' + hostname + ':' + adminPort
   
   // 从 localStorage 恢复登录状态
