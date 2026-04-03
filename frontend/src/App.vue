@@ -10,6 +10,7 @@
         <div class="top-bar-right">
           <div class="user-info">
             <span v-if="isLoggedIn" class="welcome-text">👋 欢迎，{{ userName }}</span>
+            <button v-if="isLoggedIn" @click="handleLogout" class="logout-btn">退出登录</button>
             <button v-else @click="showAuthDialog = true" class="login-link">登录 / 注册</button>
           </div>
         </div>
@@ -692,6 +693,15 @@ onMounted(() => {
   const hostname = window.location.hostname
   const adminPort = hostname === '192.168.0.120' ? '1025' : '1026'
   adminUrl.value = 'http://' + hostname + ':' + adminPort
+  
+  // 从 localStorage 恢复登录状态
+  const savedToken = localStorage.getItem('token')
+  const savedUsername = localStorage.getItem('username')
+  if (savedToken && savedUsername) {
+    isLoggedIn.value = true
+    userName.value = savedUsername
+  }
+  
   fetchConfig()
   fetchBanners()
   fetchHotProducts()
@@ -966,10 +976,27 @@ onUnmounted(() => {
   background: rgba(255,255,255,0.2);
   border-radius: 20px;
   transition: background 0.3s;
+  border: none;
+  cursor: pointer;
 }
 
 .login-link:hover {
   background: rgba(255,255,255,0.3);
+}
+
+.logout-btn {
+  color: #fff;
+  font-size: 14px;
+  padding: 8px 20px;
+  background: rgba(255,100,100,0.3);
+  border-radius: 20px;
+  transition: background 0.3s;
+  border: none;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background: rgba(255,100,100,0.5);
 }
 
 /* Products Section - New Style */
