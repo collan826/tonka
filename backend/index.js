@@ -715,6 +715,227 @@ app.post('/api/file/upload', upload.single('file'), (req, res) => {
   })
 })
 
+// ==================== 订单管理系统 ====================
+
+// 初始化订单表
+function initOrderTables() {
+  // 订单表
+  db.exec(`CREATE TABLE IF NOT EXISTS orders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_no TEXT UNIQUE,
+    user_id INTEGER,
+    total_amount REAL,
+    status INTEGER DEFAULT 0,
+    payment_method TEXT,
+    payment_time DATETIME,
+    shipping_name TEXT,
+    shipping_phone TEXT,
+    shipping_address TEXT,
+    remark TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`)
+  
+  // 订单商品表
+  db.exec(`CREATE TABLE IF NOT EXISTS order_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER,
+    product_id INTEGER,
+    product_name TEXT,
+    product_image TEXT,
+    price REAL,
+    quantity INTEGER,
+    subtotal REAL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`)
+  
+  console.log('✅ 订单表初始化完成！')
+}
+
+initOrderTables()
+
+// 生成订单号
+function generateOrderNo() {
+  const date = new Date()
+  const timestamp = date.getTime().toString().slice(-8)
+  const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
+  return 'TK' + timestamp + random
+}
+
+// JWT 验证中间件
+function verifyToken(req, res, next) {
+  const authHeader = req.headers.authorization
+  console.log('🔍 verifyToken - authHeader:', authHeader)
+  if (!authHeader) {
+    return res.json({ code: 401, message: '未登录' })
+  }
+  const token = authHeader.replace('Bearer ', '')
+  console.log('🔍 verifyToken - token:', token)
+  console.log('🔍 verifyToken - JWT_SECRET:', JWT_SECRET)
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET)
+    console.log('🔍 verifyToken - decoded:', decoded)
+    req.user = decoded
+    next()
+  } catch (e) {
+    console.log('❌ verifyToken - error:', e.message)
+    return res.json({ code: 401, message: 'Token 无效: ' + e.message })
+  }
+}
+
+// ========== 前端订单API ==========
+
+// 创建订单
+app.post('/api/order/create', verifyToken, (req, res) => {
+  const { items, shipping_name, shipping_phone, shipping_address, remark } = req.body
+  const user_id = req.user.id
+  
+  if (!items || items.length === 0) {
+    return res.json({ code: 400, message: '购物车为空' })
+  }
+  
+  // 计算总金额
+  const total_amount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+  const order_no = generateOrderNo()
+  
+  // 创建订单
+  const orderStmt = db.prepare(`INSERT INTO orders 
+    (order_no, user_id, total_amount, shipping_name, shipping_phone, shipping_address, remark) 
+    VALUES (?, ?, ?, ?, ?, ?, ?)`)
+  const result = orderStmt.run(order_no, user_id, total_amount, shipping_name, shipping_phone, shipping_address, remark)
+  const order_id = result.lastInsertRowid
+  
+  // 创建订单商品
+  const itemStmt = db.prepare(`INSERT INTO order_items 
+    (order_id, product_id, product_name, product_image, price, quantity, subtotal) 
+    VALUES (?, ?, ?, ?, ?, ?, ?)`)
+  
+  items.forEach(item => {
+    const subtotal = item.price * item.quantity
+    itemStmt.run(order_id, item.id, item.title, item.image, item.price, item.quantity, subtotal)
+  })
+  
+  res.json({
+    code: 200,
+    message: '订单创建成功',
+    data: { order_id, order_no, total_amount }
+  })
+})
+
+// 获取用户订单列表
+app.get('/api/order/list', verifyToken, (req, res) => {
+  const user_id = req.user.id
+  const { status } = req.query
+  
+  let sql = 'SELECT * FROM orders WHERE user_id = ?'
+  const params = [user_id]
+  
+  if (status !== undefined && status !== '') {
+    sql += ' AND status = ?'
+    params.push(status)
+  }
+  
+  sql += ' ORDER BY created_at DESC'
+  
+  const orders = db.prepare(sql).all(...params)
+  res.json({ code: 200, data: orders })
+})
+
+// 获取订单详情
+app.get('/api/order/:id', verifyToken, (req, res) => {
+  const order_id = req.params.id
+  const user_id = req.user.id
+  
+  const order = db.prepare('SELECT * FROM orders WHERE id = ? AND user_id = ?').get(order_id, user_id)
+  if (!order) {
+    return res.json({ code: 404, message: '订单不存在' })
+  }
+  
+  const items = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(order_id)
+  
+  res.json({ code: 200, data: { ...order, items } })
+})
+
+// 取消订单
+app.post('/api/order/:id/cancel', verifyToken, (req, res) => {
+  const order_id = req.params.id
+  const user_id = req.user.id
+  
+  const order = db.prepare('SELECT * FROM orders WHERE id = ? AND user_id = ?').get(order_id, user_id)
+  if (!order) {
+    return res.json({ code: 404, message: '订单不存在' })
+  }
+  
+  if (order.status !== 0) {
+    return res.json({ code: 400, message: '订单状态不允许取消' })
+  }
+  
+  db.prepare('UPDATE orders SET status = 4, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(order_id)
+  res.json({ code: 200, message: '订单已取消' })
+})
+
+// ========== 管理后台订单API ==========
+
+// 获取所有订单列表
+app.get('/api/admin/orders', (req, res) => {
+  const { status, start_date, end_date } = req.query
+  
+  let sql = 'SELECT o.*, u.username FROM orders o LEFT JOIN user u ON o.user_id = u.id WHERE 1=1'
+  const params = []
+  
+  if (status !== undefined && status !== '') {
+    sql += ' AND o.status = ?'
+    params.push(status)
+  }
+  
+  if (start_date) {
+    sql += ' AND o.created_at >= ?'
+    params.push(start_date)
+  }
+  
+  if (end_date) {
+    sql += ' AND o.created_at <= ?'
+    params.push(end_date + ' 23:59:59')
+  }
+  
+  sql += ' ORDER BY o.created_at DESC'
+  
+  const orders = db.prepare(sql).all(...params)
+  res.json({ code: 200, data: orders })
+})
+
+// 获取订单详情（管理后台）
+app.get('/api/admin/order/:id', (req, res) => {
+  const order_id = req.params.id
+  
+  const order = db.prepare('SELECT o.*, u.username FROM orders o LEFT JOIN user u ON o.user_id = u.id WHERE o.id = ?').get(order_id)
+  if (!order) {
+    return res.json({ code: 404, message: '订单不存在' })
+  }
+  
+  const items = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(order_id)
+  
+  res.json({ code: 200, data: { ...order, items } })
+})
+
+// 更新订单状态
+app.put('/api/admin/order/:id/status', (req, res) => {
+  const order_id = req.params.id
+  const { status } = req.body
+  
+  db.prepare('UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(status, order_id)
+  res.json({ code: 200, message: '订单状态已更新' })
+})
+
+// 发货
+app.put('/api/admin/order/:id/shipping', (req, res) => {
+  const order_id = req.params.id
+  const { shipping_method, tracking_no } = req.body
+  
+  db.prepare('UPDATE orders SET status = 2, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(order_id)
+  res.json({ code: 200, message: '发货成功' })
+})
+
 // ==================== 启动服务 ====================
 
 // 获取本机IP地址

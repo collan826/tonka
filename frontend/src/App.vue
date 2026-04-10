@@ -10,6 +10,7 @@
         <div class="top-bar-right">
           <div class="user-info">
             <span v-if="isLoggedIn" class="welcome-text">👋 欢迎，{{ userName }}</span>
+            <button v-if="isLoggedIn" @click="showOrderList = true" class="order-link">我的订单</button>
             <button v-if="isLoggedIn" @click="handleLogout" class="logout-btn">退出登录</button>
             <button v-else @click="showAuthDialog = true" class="login-link">登录 / 注册</button>
           </div>
@@ -212,9 +213,132 @@
         <div class="cart-total">
           总计：<span class="total-price">¥{{ calculateTotalPrice().toFixed(2) }}</span>
         </div>
-        <button @click="handleCheckout" class="checkout-btn">去结算</button>
+        <button @click="showCheckoutDialog = true; cartVisible = false" class="checkout-btn">去结算</button>
       </div>
     </div>
+
+    <!-- 结算对话框 -->
+    <el-dialog v-model="showCheckoutDialog" title="确认订单" width="600px">
+      <div class="checkout-content">
+        <!-- 商品清单 -->
+        <div class="checkout-section">
+          <h4>商品清单</h4>
+          <div class="checkout-items">
+            <div v-for="(item, index) in cart" :key="index" class="checkout-item">
+              <img :src="item.image" :alt="item.title" class="checkout-item-image" />
+              <div class="checkout-item-info">
+                <h5>{{ item.title }}</h5>
+                <p class="checkout-item-price">{{ item.price }} × {{ item.quantity }}</p>
+              </div>
+              <span class="checkout-item-subtotal">¥{{ (parseFloat(item.price.replace(/[^0-9.]/g, '')) * item.quantity).toFixed(2) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 收货信息 -->
+        <div class="checkout-section">
+          <h4>收货信息</h4>
+          <el-form :model="checkoutForm" label-width="80px">
+            <el-form-item label="收货人">
+              <el-input v-model="checkoutForm.shipping_name" placeholder="请输入收货人姓名" />
+            </el-form-item>
+            <el-form-item label="电话">
+              <el-input v-model="checkoutForm.shipping_phone" placeholder="请输入联系电话" />
+            </el-form-item>
+            <el-form-item label="地址">
+              <el-input v-model="checkoutForm.shipping_address" type="textarea" :rows="2" placeholder="请输入收货地址" />
+            </el-form-item>
+            <el-form-item label="备注">
+              <el-input v-model="checkoutForm.remark" type="textarea" :rows="2" placeholder="选填，可填写特殊要求" />
+            </el-form-item>
+          </el-form>
+        </div>
+
+        <!-- 订单金额 -->
+        <div class="checkout-total">
+          <span>订单总金额：</span>
+          <span class="checkout-total-price">¥{{ calculateTotalPrice().toFixed(2) }}</span>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="showCheckoutDialog = false">取消</el-button>
+        <el-button type="primary" @click="submitOrder" :loading="submittingOrder">提交订单</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 订单列表对话框 -->
+    <el-dialog v-model="showOrderList" title="我的订单" width="800px">
+      <div class="order-list-content">
+        <el-tabs v-model="orderStatusFilter" @tab-change="fetchOrders">
+          <el-tab-pane label="全部" name=""></el-tab-pane>
+          <el-tab-pane label="待支付" name="0"></el-tab-pane>
+          <el-tab-pane label="已支付" name="1"></el-tab-pane>
+          <el-tab-pane label="已发货" name="2"></el-tab-pane>
+          <el-tab-pane label="已完成" name="3"></el-tab-pane>
+          <el-tab-pane label="已取消" name="4"></el-tab-pane>
+        </el-tabs>
+
+        <div v-if="orders.length === 0" class="empty-orders">
+          <p>暂无订单</p>
+        </div>
+
+        <div v-else class="orders-container">
+          <div v-for="order in orders" :key="order.id" class="order-card">
+            <div class="order-header">
+              <span class="order-no">订单号：{{ order.order_no }}</span>
+              <span class="order-status">{{ getOrderStatusText(order.status) }}</span>
+            </div>
+            <div class="order-footer">
+              <span class="order-time">下单时间：{{ order.created_at }}</span>
+              <span class="order-total">总金额：¥{{ parseFloat(order.total_amount).toFixed(2) }}</span>
+              <div class="order-actions">
+                <el-button size="small" @click="viewOrderDetail(order)">查看详情</el-button>
+                <el-button v-if="order.status === 0" size="small" type="danger" @click="cancelOrder(order)">取消订单</el-button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </el-dialog>
+
+    <!-- 订单详情对话框 -->
+    <el-dialog v-model="showOrderDetail" title="订单详情" width="600px">
+      <div v-if="currentOrder" class="order-detail-content">
+        <div class="detail-section">
+          <h4>订单信息</h4>
+          <p><strong>订单号：</strong>{{ currentOrder.order_no }}</p>
+          <p><strong>订单状态：</strong>{{ getOrderStatusText(currentOrder.status) }}</p>
+          <p><strong>下单时间：</strong>{{ currentOrder.created_at }}</p>
+          <p><strong>总金额：</strong>¥{{ parseFloat(currentOrder.total_amount).toFixed(2) }}</p>
+        </div>
+
+        <div class="detail-section">
+          <h4>收货信息</h4>
+          <p><strong>收货人：</strong>{{ currentOrder.shipping_name }}</p>
+          <p><strong>电话：</strong>{{ currentOrder.shipping_phone }}</p>
+          <p><strong>地址：</strong>{{ currentOrder.shipping_address }}</p>
+          <p v-if="currentOrder.remark"><strong>备注：</strong>{{ currentOrder.remark }}</p>
+        </div>
+
+        <div class="detail-section">
+          <h4>商品清单</h4>
+          <div class="detail-items">
+            <div v-for="item in currentOrder.items" :key="item.id" class="detail-item">
+              <img :src="item.product_image" :alt="item.product_name" />
+              <div class="detail-item-info">
+                <h5>{{ item.product_name }}</h5>
+                <p>¥{{ parseFloat(item.price).toFixed(2) }} × {{ item.quantity }}</p>
+              </div>
+              <span class="detail-item-subtotal">¥{{ parseFloat(item.subtotal).toFixed(2) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="showOrderDetail = false">关闭</el-button>
+        <el-button v-if="currentOrder && currentOrder.status === 0" type="danger" @click="cancelOrder(currentOrder)">取消订单</el-button>
+      </template>
+    </el-dialog>
 
     <!-- 登录/注册弹窗 -->
     <el-dialog v-model="showAuthDialog" :title="authMode === 'login' ? '登录' : '注册'" width="400px">
@@ -335,7 +459,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const currentSlide = ref(0)
 const adminUrl = ref('')
@@ -608,20 +732,6 @@ const removeFromCart = (item) => {
   }
 }
 
-// 结算
-const handleCheckout = () => {
-  if (cart.value.length === 0) {
-    ElMessage.warning('购物车是空的')
-    return
-  }
-  const total = calculateTotalPrice()
-  ElMessage.success(`结算成功！总金额：¥${total.toFixed(2)}`)
-  // 清空购物车
-  cart.value = []
-  saveCartToStorage()
-  cartVisible.value = false
-}
-
 // 登录/注册弹窗
 const showAuthDialog = ref(false)
 const authMode = ref('login') // 'login' or 'register'
@@ -639,6 +749,212 @@ const registerForm = ref({
   email: '',
   phone: ''
 })
+
+// 订单系统
+const showCheckoutDialog = ref(false)
+const showOrderList = ref(false)
+const showOrderDetail = ref(false)
+const submittingOrder = ref(false)
+const orders = ref([])
+const currentOrder = ref(null)
+const orderStatusFilter = ref('')
+
+const checkoutForm = ref({
+  shipping_name: '',
+  shipping_phone: '',
+  shipping_address: '',
+  remark: ''
+})
+
+// 获取 API 基础地址
+const getApiBase = () => {
+  const hostname = window.location.hostname
+  const apiPort = '8080'
+  return 'http://' + hostname + ':' + apiPort
+}
+
+// 获取订单状态文本
+const getOrderStatusText = (status) => {
+  const statusMap = {
+    0: '待支付',
+    1: '已支付',
+    2: '已发货',
+    3: '已完成',
+    4: '已取消'
+  }
+  return statusMap[status] || '未知'
+}
+
+// 提交订单
+const submitOrder = async () => {
+  if (!checkoutForm.value.shipping_name) {
+    ElMessage.warning('请填写收货人姓名')
+    return
+  }
+  if (!checkoutForm.value.shipping_phone) {
+    ElMessage.warning('请填写联系电话')
+    return
+  }
+  if (!checkoutForm.value.shipping_address) {
+    ElMessage.warning('请填写收货地址')
+    return
+  }
+
+  submittingOrder.value = true
+  try {
+    const token = localStorage.getItem('token')
+    console.log('🔍 submitOrder - token from localStorage:', token)
+    const apiBase = getApiBase()
+    
+    // 准备商品数据
+    const items = cart.value.map(item => ({
+      id: item.id,
+      title: item.title,
+      image: item.image,
+      price: parseFloat(item.price.replace(/[^0-9.]/g, '')) || 0,
+      quantity: item.quantity
+    }))
+    
+    const response = await fetch(apiBase + '/api/order/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify({
+        items,
+        shipping_name: checkoutForm.value.shipping_name,
+        shipping_phone: checkoutForm.value.shipping_phone,
+        shipping_address: checkoutForm.value.shipping_address,
+        remark: checkoutForm.value.remark
+      })
+    })
+    
+    const result = await response.json()
+    if (result.code === 200) {
+      ElMessage.success('订单创建成功！')
+      // 清空购物车
+      cart.value = []
+      saveCartToStorage()
+      showCheckoutDialog.value = false
+      // 重置表单
+      checkoutForm.value = {
+        shipping_name: '',
+        shipping_phone: '',
+        shipping_address: '',
+        remark: ''
+      }
+      // 跳转到订单列表
+      fetchOrders()
+      showOrderList.value = true
+    } else {
+      ElMessage.error(result.message || '订单创建失败')
+    }
+  } catch (error) {
+    console.error('提交订单失败:', error)
+    ElMessage.error('提交订单失败')
+  } finally {
+    submittingOrder.value = false
+  }
+}
+
+// 获取订单列表
+const fetchOrders = async () => {
+  try {
+    const token = localStorage.getItem('token')
+    const apiBase = getApiBase()
+    let url = apiBase + '/api/order/list'
+    if (orderStatusFilter.value !== '') {
+      url += '?status=' + orderStatusFilter.value
+    }
+    
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': 'Bearer ' + token
+      }
+    })
+    
+    const result = await response.json()
+    if (result.code === 200) {
+      orders.value = result.data || []
+    } else {
+      ElMessage.error(result.message || '获取订单列表失败')
+    }
+  } catch (error) {
+    console.error('获取订单列表失败:', error)
+    ElMessage.error('获取订单列表失败')
+  }
+}
+
+// 查看订单详情
+const viewOrderDetail = async (order) => {
+  try {
+    const token = localStorage.getItem('token')
+    const apiBase = getApiBase()
+    
+    const response = await fetch(apiBase + '/api/order/' + order.id, {
+      headers: {
+        'Authorization': 'Bearer ' + token
+      }
+    })
+    
+    const result = await response.json()
+    if (result.code === 200) {
+      currentOrder.value = result.data
+      showOrderDetail.value = true
+    } else {
+      ElMessage.error(result.message || '获取订单详情失败')
+    }
+  } catch (error) {
+    console.error('获取订单详情失败:', error)
+    ElMessage.error('获取订单详情失败')
+  }
+}
+
+// 取消订单
+const cancelOrder = async (order) => {
+  try {
+    await ElMessageBox.confirm('确定要取消这个订单吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    const token = localStorage.getItem('token')
+    const apiBase = getApiBase()
+    
+    const response = await fetch(apiBase + '/api/order/' + order.id + '/cancel', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + token
+      }
+    })
+    
+    const result = await response.json()
+    if (result.code === 200) {
+      ElMessage.success('订单已取消')
+      showOrderDetail.value = false
+      fetchOrders()
+    } else {
+      ElMessage.error(result.message || '取消订单失败')
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('取消订单失败:', error)
+      ElMessage.error('取消订单失败')
+    }
+  }
+}
+
+// 结算（修改原来的 handleCheckout）
+const handleCheckout = () => {
+  if (cart.value.length === 0) {
+    ElMessage.warning('购物车是空的')
+    return
+  }
+  showCheckoutDialog.value = true
+  cartVisible.value = false
+}
 
 // 登录
 const handleLogin = async () => {
@@ -1400,6 +1716,265 @@ onUnmounted(() => {
 .checkout-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(30, 139, 195, 0.5);
+}
+
+/* 订单链接 */
+.order-link {
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  padding: 8px 20px;
+  background: rgba(30, 139, 195, 0.3);
+  border-radius: 20px;
+  transition: background 0.3s;
+  border: none;
+  cursor: pointer;
+}
+
+.order-link:hover {
+  background: rgba(30, 139, 195, 0.5);
+}
+
+/* 结算对话框样式 */
+.checkout-content {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.checkout-section {
+  margin-bottom: 20px;
+}
+
+.checkout-section h4 {
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.checkout-items {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.checkout-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.checkout-item-image {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.checkout-item-info {
+  flex: 1;
+}
+
+.checkout-item-info h5 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.checkout-item-price {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+}
+
+.checkout-item-subtotal {
+  font-size: 16px;
+  font-weight: bold;
+  color: #c21f22;
+}
+
+.checkout-total {
+  text-align: right;
+  padding: 15px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.checkout-total-price {
+  font-size: 24px;
+  font-weight: bold;
+  color: #c21f22;
+  margin-left: 10px;
+}
+
+/* 订单列表样式 */
+.order-list-content {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.empty-orders {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+}
+
+.orders-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.order-card {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 15px;
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.order-no {
+  font-size: 14px;
+  color: #666;
+}
+
+.order-status {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e8bc3;
+}
+
+.order-items {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+}
+
+.order-item-mini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 80px;
+}
+
+.order-item-mini img {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.order-item-mini span {
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+}
+
+.order-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid #f5f5f5;
+}
+
+.order-time {
+  font-size: 12px;
+  color: #999;
+}
+
+.order-total {
+  font-size: 14px;
+  font-weight: 600;
+  color: #c21f22;
+}
+
+.order-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* 订单详情样式 */
+.order-detail-content {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.detail-section {
+  margin-bottom: 20px;
+}
+
+.detail-section h4 {
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.detail-section p {
+  margin: 8px 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.detail-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+
+.detail-item img {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.detail-item-info {
+  flex: 1;
+}
+
+.detail-item-info h5 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.detail-item-info p {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+}
+
+.detail-item-subtotal {
+  font-size: 16px;
+  font-weight: bold;
+  color: #c21f22;
 }
 
 </style>
